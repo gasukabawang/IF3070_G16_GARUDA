@@ -896,10 +896,10 @@ function formatNumber(num) {
 function syncDynamicParams() {
     const algo = document.getElementById('algoSelect').value;
 
-    document.getElementById('grpMaxIter').style.display = (algo === 'steepest') ? 'block' : 'none';
-    document.getElementById('grpMaxGens').style.display = (algo === 'genetic_algorithm') ? 'block' : 'none';
-    document.getElementById('grpPopSize').style.display = (algo === 'genetic_algorithm') ? 'block' : 'none';
-    document.getElementById('grpMutationRate').style.display = (algo === 'genetic_algorithm') ? 'block' : 'none';
+    document.getElementById('grpMaxIter').style.display       = (algo === 'steepest') ? 'block' : 'none';
+    document.getElementById('grpMaxGens').style.display       = (algo === 'genetic_algorithm') ? 'block' : 'none';
+    document.getElementById('grpPopSize').style.display       = (algo === 'genetic_algorithm') ? 'block' : 'none';
+    document.getElementById('grpMutationRate').style.display  = (algo === 'genetic_algorithm') ? 'block' : 'none';
 }
 
 document.getElementById('algoSelect').addEventListener('change', function() {
