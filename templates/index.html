@@ -721,8 +721,12 @@
             <div class="form-group">
                 <label for="algoSelect">Optimization Algorithm</label>
                 <select id="algoSelect" class="form-control">
+                    <option value="steepest">Steepest Ascent Hill-Climbing</option>
                     <option value="stochastic">Stochastic Hill-Climbing</option>
+                    <option value="sideways">Hill-Climbing with Sideways Move</option>
                     <option value="restart">Random Restart Hill-Climbing</option>
+                    <option value="simulated_annealing">Simulated Annealing</option>
+                    <option value="genetic_algorithm">Genetic Algorithm</option>
                 </select>
             </div>
 
@@ -732,9 +736,36 @@
                     <input type="number" id="inputMaxIter" class="form-control" value="500" min="10" max="5000" />
                 </div>
 
+                <div class="form-group" id="grpMaxSideways" style="display: none;">
+                    <label for="inputMaxSideways">Max Sideways Moves</label>
+                    <input type="number" id="inputMaxSideways" class="form-control" value="100" min="1" max="1000" />
+                </div>
+
                 <div class="form-group" id="grpMaxRestarts" style="display: none;">
                     <label for="inputMaxRestarts">Max Restarts</label>
                     <input type="number" id="inputMaxRestarts" class="form-control" value="5" min="1" max="50" />
+                </div>
+
+                <div class="form-group" id="grpInitialTemp" style="display: none;">
+                    <label for="inputInitialTemp">Initial Temperature (T0)</label>
+                    <input type="number" id="inputInitialTemp" class="form-control" value="1000" min="10" max="50000" step="50" />
+                </div>
+                <div class="form-group" id="grpCoolingRate" style="display: none;">
+                    <label for="inputCoolingRate">Cooling Rate (Alpha)</label>
+                    <input type="number" id="inputCoolingRate" class="form-control" value="0.95" min="0.5" max="0.999" step="0.01" />
+                </div>
+
+                <div class="form-group" id="grpMaxGens" style="display: none;">
+                    <label for="inputMaxGens">Max Generations</label>
+                    <input type="number" id="inputMaxGens" class="form-control" value="40" min="5" max="500" />
+                </div>
+                <div class="form-group" id="grpPopSize" style="display: none;">
+                    <label for="inputPopSize">Population Size (k)</label>
+                    <input type="number" id="inputPopSize" class="form-control" value="20" min="4" max="200" />
+                </div>
+                <div class="form-group" id="grpMutationRate" style="display: none;">
+                    <label for="inputMutationRate">Mutation Rate</label>
+                    <input type="number" id="inputMutationRate" class="form-control" value="0.15" min="0.01" max="1.0" step="0.05" />
                 </div>
             </div>
 
@@ -888,8 +919,14 @@ function formatNumber(num) {
 function syncDynamicParams() {
     const algo = document.getElementById('algoSelect').value;
 
-    document.getElementById('grpMaxIter').style.display     = 'block';
-    document.getElementById('grpMaxRestarts').style.display = (algo === 'restart') ? 'block' : 'none';
+    document.getElementById('grpMaxIter').style.display       = (algo !== 'genetic_algorithm') ? 'block' : 'none';
+    document.getElementById('grpMaxSideways').style.display   = (algo === 'sideways') ? 'block' : 'none';
+    document.getElementById('grpMaxRestarts').style.display   = (algo === 'restart') ? 'block' : 'none';
+    document.getElementById('grpInitialTemp').style.display   = (algo === 'simulated_annealing') ? 'block' : 'none';
+    document.getElementById('grpCoolingRate').style.display   = (algo === 'simulated_annealing') ? 'block' : 'none';
+    document.getElementById('grpMaxGens').style.display       = (algo === 'genetic_algorithm') ? 'block' : 'none';
+    document.getElementById('grpPopSize').style.display       = (algo === 'genetic_algorithm') ? 'block' : 'none';
+    document.getElementById('grpMutationRate').style.display  = (algo === 'genetic_algorithm') ? 'block' : 'none';
 }
 
 document.getElementById('algoSelect').addEventListener('change', function() {
@@ -903,7 +940,13 @@ function getParamPayload() {
     return {
         algorithm: algo,
         max_iterations: parseInt(document.getElementById('inputMaxIter').value) || 500,
-        max_restarts: parseInt(document.getElementById('inputMaxRestarts').value) || 5
+        max_sideways_moves: parseInt(document.getElementById('inputMaxSideways').value) || 100,
+        max_restarts: parseInt(document.getElementById('inputMaxRestarts').value) || 5,
+        initial_temperature: parseFloat(document.getElementById('inputInitialTemp').value) || 1000.0,
+        cooling_rate: parseFloat(document.getElementById('inputCoolingRate').value) || 0.95,
+        population_size: parseInt(document.getElementById('inputPopSize').value) || 20,
+        max_generations: parseInt(document.getElementById('inputMaxGens').value) || 40,
+        mutation_rate: parseFloat(document.getElementById('inputMutationRate').value) || 0.15
     };
 }
 
@@ -933,7 +976,13 @@ function updateRunButtonText() {
 }
 
 function formatParams(payload) {
-    if (payload.algorithm === 'restart') {
+    if (payload.algorithm === 'genetic_algorithm') {
+        return `Pop: ${payload.population_size}, Gens: ${payload.max_generations}, Mut: ${payload.mutation_rate}`;
+    } else if (payload.algorithm === 'simulated_annealing') {
+        return `T0: ${payload.initial_temperature}, Cooling: ${payload.cooling_rate}, Max Iter: ${payload.max_iterations}`;
+    } else if (payload.algorithm === 'sideways') {
+        return `Max Sideways: ${payload.max_sideways_moves}, Max Iter: ${payload.max_iterations}`;
+    } else if (payload.algorithm === 'restart') {
         return `Restarts: ${payload.max_restarts}, Max Iter: ${payload.max_iterations}`;
     }
     return `Max Iter: ${payload.max_iterations}`;
@@ -953,6 +1002,18 @@ const datasetBest = {
     tension: 0.25,
     pointRadius: 2.5,
     pointHoverRadius: 5
+};
+
+const datasetAvg = {
+    label: 'Population Avg Fitness ($)',
+    data: [],
+    borderColor: '#10b981',
+    borderDash: [5, 5],
+    borderWidth: 2,
+    pointStyle: 'line',
+    fill: false,
+    tension: 0.25,
+    pointRadius: 0
 };
 
 function initChart() {
@@ -1012,37 +1073,57 @@ function initChart() {
 
 function resetChart(initialScore = 0) {
     if (!objChart) return;
+    const isGA = (document.getElementById('algoSelect').value === 'genetic_algorithm');
 
     lastPlottedIter = 0;
     datasetBest.data = [initialScore];
-    datasetBest.label = 'Objective Score ($)';
+    datasetBest.label = isGA ? 'Max Population Fitness ($)' : 'Objective Score ($)';
 
-    objChart.data.datasets = [datasetBest];
+    if (isGA) {
+        datasetAvg.data = [initialScore];
+        objChart.data.datasets = [datasetBest, datasetAvg];
+    } else {
+        datasetAvg.data = [];
+        objChart.data.datasets = [datasetBest];
+    }
+
     objChart.data.labels = [0];
-    objChart.options.scales.x.title.text = 'Valid Iterations';
+    objChart.options.scales.x.title.text = isGA ? 'Generations' : 'Valid Iterations';
     objChart.update();
 }
 
-function addChartPoint(iter, score) {
+function addChartPoint(iter, score, avgScore = null) {
     if (!objChart) return;
     if (iter === lastPlottedIter) return;
     lastPlottedIter = iter;
 
+    const isGA = (document.getElementById('algoSelect').value === 'genetic_algorithm');
     objChart.data.labels.push(iter);
     datasetBest.data.push(score);
+
+    if (isGA && avgScore !== null && avgScore !== undefined) {
+        datasetAvg.data.push(avgScore);
+    }
     objChart.update();
 }
 
-function setFullChartData(labels, bestData) {
+function setFullChartData(labels, bestData, avgData = []) {
     if (!objChart) return;
+    const isGA = (document.getElementById('algoSelect').value === 'genetic_algorithm');
     lastPlottedIter = labels.length > 0 ? labels[labels.length - 1] : 0;
 
     objChart.data.labels = labels;
     datasetBest.data = bestData;
-    datasetBest.label = 'Objective Score ($)';
+    datasetBest.label = isGA ? 'Max Population Fitness ($)' : 'Objective Score ($)';
 
-    objChart.data.datasets = [datasetBest];
-    objChart.options.scales.x.title.text = 'Valid Iterations';
+    if (isGA && avgData && avgData.length) {
+        datasetAvg.data = avgData;
+        objChart.data.datasets = [datasetBest, datasetAvg];
+    } else {
+        datasetAvg.data = [];
+        objChart.data.datasets = [datasetBest];
+    }
+    objChart.options.scales.x.title.text = isGA ? 'Generations' : 'Valid Iterations';
     objChart.update();
 }
 
@@ -1086,7 +1167,10 @@ async function doStep() {
 
         updateUI(data);
 
-        addChartPoint(data.iter, data.score);
+        const latestAvg = (data.history_avg && data.history_avg.length)
+            ? data.history_avg[data.history_avg.length - 1]
+            : null;
+        addChartPoint(data.iter, data.score, latestAvg);
 
         if (data.is_stuck) {
             algoTerminated = true;
@@ -1145,8 +1229,9 @@ async function doRunFull() {
             recordHistory(data.run_metric);
 
             const bestHistory = data.run_metric.history_best || [];
+            const avgHistory  = data.run_metric.history_avg || [];
             const labels = Array.from({ length: bestHistory.length }, (_, i) => i);
-            setFullChartData(labels, bestHistory);
+            setFullChartData(labels, bestHistory, avgHistory);
         }
     } catch (e) {
         console.error('Run full error:', e);
