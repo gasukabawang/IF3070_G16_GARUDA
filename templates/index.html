@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PT Intim Line Cargo — 2D Cargo Ship Deck Stacking Optimization</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-body:      #0b0e14;
+            --surface-1:    #151923;
+            --surface-2:    #1c2230;
+            --surface-3:    #242b3d;
+            --border:       #2a3349;
+            --border-hover: #3b4765;
+            --primary:      #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.25);
+            --secondary:    #8b5cf6;
+            --success:      #10b981;
+            --warning:      #f59e0b;
+            --danger:       #ef4444;
+            --text-main:    #f1f5f9;
+            --text-muted:   #94a3b8;
+            --cell-size:    56px;
+            --radius-md:    10px;
+            --radius-lg:    16px;}
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 13.5px;
+            line-height: 1.5;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header.app-header {
+            background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-title .icon {
+            font-size: 32px;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-title h1 {
+            font-size: 19px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 12.5px;
+            margin-top: 2px;
+        }
+
+        .header-tag {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--primary);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 310px 1fr 310px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card {
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h2 {
+            font-size: 13.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        select.form-control, input.form-control {
+            width: 100%;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            padding: 9px 12px;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        select.form-control:focus, input.form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .dynamic-params {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            margin-top: 10px;
+            margin-bottom: 16px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        button.btn {
+            width: 100%;
+            padding: 10px 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button.btn:active {
+            transform: scale(0.98);
+        }
+
+        button.btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-outline {
+            background: var(--surface-2);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover:not(:disabled) {
+            background: var(--surface-3);
+            border-color: var(--border-hover);
+        }
+
+        .btn-step {
+            background: var(--primary);
+            color: #ffffff;
+        }
+        .btn-step:hover:not(:disabled) {
+            background: #2563eb;
+        }
+
+        .btn-run {
+            background: var(--secondary);
+            color: #ffffff;
+        }
+        .btn-run:hover:not(:disabled) {
+            background: #7c3aed;
+        }
+
+        .btn-auto.running {
+            background: var(--danger);
+        }
+
+        .mode-toggle-wrap {
+            display: flex;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 3px;
+            margin-top: 12px;
+            gap: 4px;
+        }
+
+        .mode-tab {
+            flex: 1;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .mode-tab:hover {
+            color: var(--text-main);
+        }
+
+        .mode-tab.active {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 2px 8px var(--primary-glow);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card .stat-label {
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.1;
+        }
+
+        .stat-value.highlight-blue   { color: var(--primary); }
+        .stat-value.highlight-green  { color: var(--success); }
+        .stat-value.highlight-yellow { color: var(--warning); }
+        .stat-value.highlight-red    { color: var(--danger); }
+
+        .capacity-bar-container {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-bottom: 18px;
+        }
+
+        .capacity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .progress-track {
+            background: var(--surface-3);
+            border-radius: 999px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            border-radius: 999px;
+            transition: width 0.4s ease, background-color 0.4s ease;
+        }
+
+        .progress-fill.warn { background: var(--warning); }
+        .progress-fill.over { background: var(--danger); }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 700;
+        }
+        .status-badge.valid   { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-badge.invalid { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .status-badge.stuck   { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .deck-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+
+        .deck-grid {
+            display: grid;
+            gap: 5px;
+            background: var(--surface-1);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+        }
+
+        .deck-cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 800;
+            user-select: none;
+            transition: all 0.25s ease;
+        }
+
+        .cell-empty {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: transparent;
+        }
+
+        .cell-loaded {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cell-clash {
+            background: rgba(239, 68, 68, 0.4) !important;
+            border: 2px solid var(--danger) !important;
+            color: #ffffff !important;
+            animation: pulse-clash 1s infinite;
+        }
+
+        @keyframes pulse-clash {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.97); }
+        }
+
+        .message-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            font-size: 12.5px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            color: var(--text-main);
+        }
+
+        .vehicle-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: none;
+            overflow-y: visible;
+            padding-right: 0;
+        }
+
+        .vehicle-item {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: border-color 0.2s;
+        }
+
+        .vehicle-item.is-loaded {
+            border-left: 3px solid var(--success);
+        }
+
+        .vehicle-item.is-parked {
+            border-left: 3px solid var(--border);
+            opacity: 0.65;
+        }
+
+        .v-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .v-color-tag {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        .v-id {
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .v-meta {
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+
+        .v-badge {
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+        .v-badge.badge-loaded { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .v-badge.badge-parked { background: var(--surface-3); color: var(--text-muted); }
+
+        .chart-card {
+            margin-top: 20px;
+        }
+
+        .history-card {
+            margin-top: 20px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+
+        table.history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            text-align: left;
+        }
+
+        table.history-table th, table.history-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table.history-table th {
+            background: var(--surface-2);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        table.history-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        table.history-table tfoot tr {
+            background: var(--surface-3);
+            font-weight: 700;
+        }
+
+        table.history-table tfoot td {
+            border-top: 2px solid var(--border);
+            color: #ffffff;
+        }
+
+        .btn-clear {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-clear:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <header class="app-header">
+        <div class="header-title">
+            <div class="icon">🚢</div>
+            <div>
+                <h1>PT Intim Line Cargo — 2D Cargo Ship Deck Stacking</h1>
+                <p>IF3070 Artificial Intelligence · Cargo Carrier Deck Optimization (Stochastic & Random Restart)</p>
+            </div>
+        </div>
+        <div class="header-tag">Group G16 GARUDA</div>
+    </header>
+
+    <div class="workspace-grid">
+
+        <div class="card">
+            <div class="card-header">
+                <h2>⚙️ Algorithm Controls</h2>
+            </div>
+
+            <div class="form-group">
+                <label for="algoSelect">Optimization Algorithm</label>
+                <select id="algoSelect" class="form-control">
+                    <option value="stochastic">Stochastic Hill-Climbing</option>
+                    <option value="random_restart">Random Restart Hill-Climbing</option>
+                </select>
+            </div>
+
+            <div class="dynamic-params" id="dynamicParamsContainer">
+                <div class="form-group" id="grpMaxIter">
+                    <label for="inputMaxIter">Max Iterations</label>
+                    <input type="number" id="inputMaxIter" class="form-control" value="500" min="10" max="5000" />
+                </div>
+
+                <div class="form-group" id="grpMaxRestarts" style="display: none;">
+                    <label for="inputMaxRestarts">Max Restarts</label>
+                    <input type="number" id="inputMaxRestarts" class="form-control" value="5" min="1" max="50" />
+                </div>
+            </div>
+
+            <div class="mode-toggle-wrap">
+                <button type="button" class="mode-tab active" id="tabModeFast" onclick="setExecutionMode('fast')">⚡ Fast Mode</button>
+                <button type="button" class="mode-tab" id="tabModeAnimate" onclick="setExecutionMode('animate')">🎬 Animated Mode</button>
+            </div>
+
+            <div class="btn-group" style="margin-top: 10px;">
+                <button class="btn btn-outline" onclick="doReset()">🔄 Reset Initial State</button>
+                <button class="btn btn-step" id="btnStep" onclick="doStep()">👣 Single Step</button>
+                <button class="btn btn-run" id="btnRun" onclick="handleRunAlgorithm()">▶️ Run Algorithm</button>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Status Log</label>
+                <div class="message-box" id="msgBox" style="margin-top: 6px;">Ready. Click Reset or Run.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>🚢 Ship Deck Stacking Visualizer (6×6 Grid)</h2>
+                <div id="statusBadge" class="status-badge valid">✅ Valid Deck Placement</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Objective Score</span>
+                    <span class="stat-value highlight-blue" id="valScore">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Valid Iterations</span>
+                    <span class="stat-value" id="valIter">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Trial Evaluations</span>
+                    <span class="stat-value highlight-green" id="valEvals">0</span>
+                </div>
+            </div>
+
+            <div class="capacity-bar-container">
+                <div class="capacity-header">
+                    <span>Deck Weight Capacity</span>
+                    <span id="capacityLabel">0 / 100 Tons</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="capacityFill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="deck-wrapper">
+                <div class="deck-grid" id="deckGridContainer"></div>
+                <div style="font-size: 11.5px; color: var(--text-muted); text-align: center;">
+                    Each cell represents 1×1 meter deck area. Vehicles with borders are loaded on the carrier deck.
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="max-height: none !important; overflow: visible !important;">
+            <div class="card-header">
+                <h2>🚗 Cargo Manifest</h2>
+                <span style="font-size: 11.5px; color: var(--text-muted);" id="manifestCount">0 Vehicles</span>
+            </div>
+
+            <div class="vehicle-list" id="vehicleListContainer" style="max-height: none !important; overflow: visible !important; height: auto !important;"></div>
+        </div>
+
+    </div>
+
+    <div class="card chart-card">
+        <div class="card-header">
+            <h2>📈 Real-Time Objective Function Trajectory</h2>
+        </div>
+        <div style="position: relative; height: 260px; width: 100%;">
+            <canvas id="objectiveChart"></canvas>
+        </div>
+    </div>
+
+    <div class="card history-card">
+        <div class="card-header">
+            <h2>📊 Experiment History Log</h2>
+            <button class="btn-clear" onclick="clearHistory()">🗑️ Clear History</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="history-table" id="historyTable">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">Run #</th>
+                        <th>Algorithm</th>
+                        <th>Parameters Used</th>
+                        <th>Objective Score (Fee)</th>
+                        <th>Valid Iterations</th>
+                        <th>Trial Evaluations</th>
+                        <th>Execution Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">AVERAGE SUMMARY (<span id="totalRunsCount">0</span> Runs)</td>
+                        <td id="avgScore">—</td>
+                        <td id="avgIterations">—</td>
+                        <td>—</td>
+                        <td id="avgExecTime">—</td>
+                        <td>—</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let autoTimer = null;
+let autoSpeed = 200;
+let runCounter = 0;
+let historyRecords = [];
+
+const PALETTE = [
+    '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b',
+    '#ec4899', '#06b6d4', '#84cc16', '#f97316',
+    '#6366f1', '#14b8a6', '#f43f5e', '#eab308'
+];
+let vehicleColorMap = {};
+
+function getVehicleColor(id, index) {
+    if (!vehicleColorMap[id]) {
+        vehicleColorMap[id] = PALETTE[index % PALETTE.length];
+    }
+    return vehicleColorMap[id];
+}
+
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function formatNumber(num) {
+    return (num || 0).toLocaleString('en-US');
+}
+
+function syncDynamicParams() {
+    const algo = document.getElementById('algoSelect').value;
+    document.getElementById('grpMaxIter').style.display = 'block';
+    document.getElementById('grpMaxRestarts').style.display = (algo === 'random_restart') ? 'block' : 'none';
+}
+
+document.getElementById('algoSelect').addEventListener('change', function() {
+    syncDynamicParams();
+    stopAuto();
+    doReset();
+});
+
+function getParamPayload() {
+    const algo = document.getElementById('algoSelect').value;
+    return {
+        algorithm: algo,
+        max_iterations: parseInt(document.getElementById('inputMaxIter').value) || 500,
+        max_restarts: parseInt(document.getElementById('inputMaxRestarts').value) || 5
+    };
+}
+
+let executionMode = 'fast';
+let animationStartTime = null;
+let sessionStartTime = null;
+
+function setExecutionMode(mode) {
+    executionMode = mode;
+    stopAuto();
+    document.getElementById('tabModeFast').classList.toggle('active', mode === 'fast');
+    document.getElementById('tabModeAnimate').classList.toggle('active', mode === 'animate');
+    updateRunButtonText();
+}
+
+function updateRunButtonText() {
+    const btn = document.getElementById('btnRun');
+    if (!btn) return;
+    if (autoTimer) {
+        btn.textContent = '⏸️ Pause Animation';
+        btn.classList.add('running');
+    } else {
+        btn.classList.remove('running');
+        btn.textContent = (executionMode === 'animate') ? '▶️ Start Animation' : '▶️ Run Algorithm';
+    }
+}
+
+function formatParams(payload) {
+    if (payload.algorithm === 'random_restart') {
+        return `Restarts: ${payload.max_restarts}, Max Iter: ${payload.max_iterations}`;
+    }
+    return `Max Iter: ${payload.max_iterations}`;
+}
+
+let objChart = null;
+let lastPlottedIter = -1;
+
+const datasetBest = {
+    label: 'Objective Score ($)',
+    data: [0],
+    borderColor: '#3b82f6',
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+    borderWidth: 2.5,
+    pointStyle: 'line',
+    fill: true,
+    tension: 0.2,
+    pointRadius: 2.5,
+    pointHoverRadius: 5
+};
+
+function initChart() {
+    const canvas = document.getElementById('objectiveChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    objChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [0],
+            datasets: [datasetBest]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 150 },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Valid Iterations', color: '#94a3b8', font: { size: 11, weight: '600' } },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8', font: { size: 10.5 } }
+                },
+                y: {
+                    title: { display: true, text: 'Shipping Fee ($)', color: '#94a3b8', font: { size: 11, weight: '600' } },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8', font: { size: 10.5 } }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        color: '#f1f5f9',
+                        font: { size: 11.5, weight: '600' },
+                        usePointStyle: true,
+                        pointStyle: 'line',
+                        boxWidth: 26,
+                        boxHeight: 2
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1c2230',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#2a3349',
+                    borderWidth: 1
+                }
+            }
+        }
+    });
+}
+
+function resetChart(initialScore = 0) {
+    if (!objChart) return;
+    lastPlottedIter = 0;
+    datasetBest.data = [initialScore];
+    objChart.data.datasets = [datasetBest];
+    objChart.data.labels = [0];
+    objChart.update();
+}
+
+function addChartPoint(iter, score) {
+    if (!objChart) return;
+    if (iter === lastPlottedIter) return;
+    lastPlottedIter = iter;
+
+    objChart.data.labels.push(iter);
+    datasetBest.data.push(score);
+    objChart.update();
+}
+
+function setFullChartData(labels, bestData) {
+    if (!objChart) return;
+    lastPlottedIter = labels.length > 0 ? labels[labels.length - 1] : 0;
+    objChart.data.labels = labels;
+    datasetBest.data = bestData;
+    objChart.data.datasets = [datasetBest];
+    objChart.update();
+}
+
+async function doReset() {
+    stopAuto();
+    animationStartTime = null;
+    sessionStartTime = null;
+    try {
+        const res = await fetch('/api/reset', { method: 'POST' });
+        const data = await res.json();
+        updateUI(data);
+        resetChart(data.score);
+    } catch (e) {
+        console.error('Reset error:', e);
+    }
+}
+
+async function doStep() {
+    try {
+        const payload = getParamPayload();
+        if (sessionStartTime === null) {
+            sessionStartTime = performance.now();
+        }
+
+        const res = await fetch('/api/step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.trial_clash) {
+            renderDeckGrid(data.trial_clash.grid, data.ship_w, data.ship_l, true);
+            document.getElementById('msgBox').textContent = '⚡ Trial Evaluation: Detected constraint clash — rejected!';
+            await new Promise(r => setTimeout(r, 65));
+        }
+
+        updateUI(data);
+        addChartPoint(data.iter, data.score);
+
+        if (data.is_stuck) {
+            stopAuto();
+            const elapsedSec = Math.max(0.001, (performance.now() - (sessionStartTime || performance.now())) / 1000);
+            const algoSelect = document.getElementById('algoSelect');
+            const algoName = algoSelect.options[algoSelect.selectedIndex].text;
+
+            recordHistory({
+                algorithm: algoName,
+                parameters: formatParams(payload),
+                score: data.score,
+                iterations: data.iter,
+                evaluations: data.evaluations,
+                execution_time: parseFloat(elapsedSec.toFixed(3)),
+                valid: data.valid
+            });
+
+            sessionStartTime = null;
+            animationStartTime = null;
+        }
+    } catch (e) {
+        console.error('Step error:', e);
+        stopAuto();
+    }
+}
+
+function handleRunAlgorithm() {
+    if (executionMode === 'animate') {
+        toggleAuto();
+    } else {
+        doRunFull();
+    }
+}
+
+async function doRunFull() {
+    stopAuto();
+    const btn = document.getElementById('btnRun');
+    btn.disabled = true;
+    btn.textContent = '⏳ Optimizing...';
+
+    resetChart(parseInt(document.getElementById('valScore').textContent.replace(/,/g, '')) || 0);
+
+    try {
+        const payload = getParamPayload();
+        const res = await fetch('/api/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        updateUI(data);
+
+        if (data.run_metric) {
+            recordHistory(data.run_metric);
+            const bestHistory = data.run_metric.history_best || [];
+            const labels = Array.from({ length: bestHistory.length }, (_, i) => i);
+            setFullChartData(labels, bestHistory);
+        }
+    } catch (e) {
+        console.error('Run full error:', e);
+    } finally {
+        btn.disabled = false;
+        updateRunButtonText();
+    }
+}
+
+function toggleAuto() {
+    if (autoTimer) {
+        stopAuto();
+    } else {
+        startAuto();
+    }
+}
+
+function startAuto() {
+    if (!animationStartTime) {
+        animationStartTime = performance.now();
+        sessionStartTime = animationStartTime;
+        resetChart(parseInt(document.getElementById('valScore').textContent.replace(/,/g, '')) || 0);
+    }
+    autoTimer = setInterval(doStep, autoSpeed);
+    updateRunButtonText();
+}
+
+function stopAuto() {
+    if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+    }
+    updateRunButtonText();
+}
+
+function updateUI(data) {
+    document.getElementById('valScore').textContent = formatNumber(data.score);
+    document.getElementById('valIter').textContent = formatNumber(data.iter);
+    document.getElementById('valEvals').textContent = formatNumber(data.evaluations);
+
+    const badge = document.getElementById('statusBadge');
+    if (data.is_stuck) {
+        badge.className = 'status-badge stuck';
+        badge.textContent = '⚠️ Local Optimum Reached';
+    } else if (data.valid) {
+        badge.className = 'status-badge valid';
+        badge.textContent = '✅ Valid Deck Placement';
+    } else {
+        badge.className = 'status-badge invalid';
+        badge.textContent = '❌ Invalid Placement';
+    }
+
+    const curWeight = data.total_weight || 0;
+    const maxCapacity = data.MaxCapacity || 100;
+    const pct = Math.min(100, Math.round((curWeight / maxCapacity) * 100));
+    const fill = document.getElementById('capacityFill');
+    fill.style.width = pct + '%';
+    fill.className = 'progress-fill' + (pct > 100 ? ' over' : pct > 80 ? ' warn' : '');
+    document.getElementById('capacityLabel').textContent = `${curWeight} / ${maxCapacity} Tons (${pct}%)`;
+
+    document.getElementById('msgBox').textContent = data.message || 'Ready.';
+
+    renderDeckGrid(data.grid, data.ship_w, data.ship_l, false);
+    renderVehicleList(data.vehicles || []);
+}
+
+function renderDeckGrid(grid, w, l, isClashFlash = false) {
+    const container = document.getElementById('deckGridContainer');
+    if (!grid || !grid.length) return;
+
+    const rows = grid.length;
+    const cols = grid[0].length;
+    container.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size))`;
+    container.style.gridTemplateRows    = `repeat(${rows}, var(--cell-size))`;
+    container.innerHTML = '';
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const cell = grid[r][c];
+            const div = document.createElement('div');
+            div.className = 'deck-cell';
+
+            if (isClashFlash && cell.count > 1) {
+                div.classList.add('cell-clash');
+                div.style.borderColor = '#ef4444';
+                div.style.background = 'rgba(239, 68, 68, 0.55)';
+                div.textContent = '💥';
+                div.title = `Trial Clash: ${cell.vehicles.join(', ')}`;
+            } else if (cell.count === 0) {
+                div.classList.add('cell-empty');
+            } else if (cell.count > 1) {
+                div.classList.add('cell-clash');
+                div.textContent = '💥';
+                div.title = `Clash: ${cell.vehicles.join(', ')}`;
+            } else {
+                const vid = cell.vehicles[0];
+                const color = vehicleColorMap[vid] || '#3b82f6';
+                div.classList.add('cell-loaded');
+                div.style.backgroundColor = hexToRgba(color, 0.85);
+                div.style.borderColor = color;
+                div.textContent = vid;
+                div.title = vid;
+            }
+            container.appendChild(div);
+        }
+    }
+}
+
+function renderVehicleList(vehicles) {
+    const container = document.getElementById('vehicleListContainer');
+    document.getElementById('manifestCount').textContent = `${vehicles.length} Vehicles`;
+    container.innerHTML = '';
+
+    vehicles.forEach((v, idx) => {
+        const color = getVehicleColor(v.id, idx);
+        const item = document.createElement('div');
+        item.className = 'vehicle-item ' + (v.is_loaded ? 'is-loaded' : 'is-parked');
+
+        item.innerHTML = `
+            <div class="v-left">
+                <div class="v-color-tag" style="background-color: ${color};"></div>
+                <div>
+                    <div class="v-id">${v.id}</div>
+                    <div class="v-meta">${v.w_eff}×${v.l_eff}m · ${v.weight}T · $${formatNumber(v.shipping_fee)}</div>
+                </div>
+            </div>
+            <div class="v-badge ${v.is_loaded ? 'badge-loaded' : 'badge-parked'}">
+                ${v.is_loaded ? '✓ Loaded' : 'Parking'}
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function recordHistory(metric) {
+    runCounter++;
+    const record = {
+        runNo: runCounter,
+        algorithm: metric.algorithm,
+        parameters: metric.parameters,
+        score: metric.score,
+        iterations: metric.iterations,
+        evaluations: metric.evaluations,
+        executionTime: metric.execution_time,
+        valid: metric.valid
+    };
+    historyRecords.push(record);
+
+    const tbody = document.getElementById('historyTableBody');
+    const tr = document.createElement('tr');
+
+    tr.innerHTML = `
+        <td style="font-weight: 700;">Run #${record.runNo}</td>
+        <td><strong>${record.algorithm}</strong></td>
+        <td style="color: var(--text-muted); font-size: 11.5px;">${record.parameters}</td>
+        <td style="color: var(--primary); font-weight: 700;">$${formatNumber(record.score)}</td>
+        <td>${formatNumber(record.iterations)}</td>
+        <td>${formatNumber(record.evaluations)}</td>
+        <td>${record.executionTime.toFixed(4)}s</td>
+        <td>${record.valid ? '✅ Valid' : '❌ Invalid'}</td>
+    `;
+    tbody.appendChild(tr);
+
+    recalculateAverages();
+}
+
+function recalculateAverages() {
+    const count = historyRecords.length;
+    document.getElementById('totalRunsCount').textContent = count;
+
+    if (count === 0) {
+        document.getElementById('avgScore').textContent = '—';
+        document.getElementById('avgIterations').textContent = '—';
+        document.getElementById('avgExecTime').textContent = '—';
+        return;
+    }
+
+    const sumScore = historyRecords.reduce((acc, r) => acc + r.score, 0);
+    const sumIters = historyRecords.reduce((acc, r) => acc + r.iterations, 0);
+    const sumTime  = historyRecords.reduce((acc, r) => acc + r.executionTime, 0);
+
+    const avgScore = Math.round(sumScore / count);
+    const avgIters = Math.round(sumIters / count);
+    const avgTime  = (sumTime / count).toFixed(4);
+
+    document.getElementById('avgScore').textContent = `$${formatNumber(avgScore)}`;
+    document.getElementById('avgIterations').textContent = formatNumber(avgIters);
+    document.getElementById('avgExecTime').textContent = `${avgTime}s`;
+}
+
+function clearHistory() {
+    historyRecords = [];
+    runCounter = 0;
+    document.getElementById('historyTableBody').innerHTML = '';
+    recalculateAverages();
+}
+
+window.addEventListener('load', () => {
+    initChart();
+    syncDynamicParams();
+    doReset();
+});
+</script>
+
+</body>
+</html>
