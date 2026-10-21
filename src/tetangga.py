@@ -1,9 +1,8 @@
 import random
 from model import State, Vehicle
 
-def initial_random_state(ship, vehicles_data):
+def initial_random_state(ship, vehicles_data, objective_type="fee"):
     vehicles = [Vehicle(**data) for data in vehicles_data]
-
     indices = list(range(len(vehicles)))
     random.shuffle(indices)
 
@@ -20,8 +19,7 @@ def initial_random_state(ship, vehicles_data):
         else:
             v.is_loaded = False
 
-    state = State(ship, vehicles)
-
+    state = State(ship, vehicles, objective_type=objective_type)
     state.repair_to_valid()
     return state
 
@@ -102,9 +100,7 @@ def generate_random_valid_neighbor(state, max_trials=100, return_clash=False):
     trials = 0
     sample_clash = None
     if not state.vehicles:
-        if return_clash:
-            return None, 0, None
-        return None, 0
+        return (None, 0, None) if return_clash else (None, 0)
 
     while trials < max_trials:
         trials += 1
@@ -131,9 +127,7 @@ def generate_random_valid_neighbor(state, max_trials=100, return_clash=False):
             target.y = random.randint(0, max_y)
 
         if new_state.is_valid():
-            if return_clash:
-                return new_state, trials, sample_clash
-            return new_state, trials
+            return (new_state, trials, sample_clash) if return_clash else (new_state, trials)
         elif sample_clash is None:
             sample_clash = new_state
 
@@ -142,9 +136,6 @@ def generate_random_valid_neighbor(state, max_trials=100, return_clash=False):
     chosen_clash = sample_clash or det_clash
     if valid_neighbors:
         chosen = random.choice(valid_neighbors)
-        if return_clash:
-            return chosen, trials, chosen_clash
-        return chosen, trials
-    if return_clash:
-        return None, trials, chosen_clash
-    return None, trials
+        return (chosen, trials, chosen_clash) if return_clash else (chosen, trials)
+
+    return (None, trials, chosen_clash) if return_clash else (None, trials)

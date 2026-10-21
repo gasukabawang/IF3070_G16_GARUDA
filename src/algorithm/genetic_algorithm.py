@@ -7,9 +7,7 @@ def crossover(parent1, parent2, return_unrepaired=False):
     n = len(parent1.vehicles)
     if n <= 1:
         child = parent1.copy()
-        if return_unrepaired:
-            return child, None
-        return child
+        return (child, None) if return_unrepaired else child
 
     cut_point = random.randint(1, n - 1)
     child_vehicles = []
@@ -20,13 +18,12 @@ def crossover(parent1, parent2, return_unrepaired=False):
         else:
             child_vehicles.append(parent2.vehicles[i].copy())
 
-    child_state = State(parent1.ship, child_vehicles)
+    obj_type = getattr(parent1, "objective_type", "fee")
+    child_state = State(parent1.ship, child_vehicles, objective_type=obj_type)
     unrepaired = child_state.copy() if return_unrepaired and not child_state.is_valid() else None
     child_state.repair_to_valid()
-    
-    if return_unrepaired:
-        return child_state, unrepaired
-    return child_state
+
+    return (child_state, unrepaired) if return_unrepaired else child_state
 
 def mutate(state, mutation_rate=0.15):
     if random.random() > mutation_rate or not state.vehicles:
@@ -69,20 +66,13 @@ def select_parent_roulette(population, fitness_scores):
             return individual
     return population[-1]
 
-def genetic_algorithm(
-    ship,
-    vehicles_data,
-    population_size=20,
-    max_generations=50,
-    mutation_rate=0.15,
-    initial_population=None
-):
+def genetic_algorithm(ship, vehicles_data, population_size=20, max_generations=50, mutation_rate=0.15, initial_population=None, objective_type="fee"):
     start_time = time.time()
 
     if initial_population is not None and len(initial_population) >= population_size:
         population = [s.copy() for s in initial_population[:population_size]]
     else:
-        population = [initial_random_state(ship, vehicles_data) for _ in range(population_size)]
+        population = [initial_random_state(ship, vehicles_data, objective_type=objective_type) for _ in range(population_size)]
 
     fitness_scores = [ind.calculate_objective() for ind in population]
     total_evaluations = len(population)
@@ -96,9 +86,7 @@ def genetic_algorithm(
     history_avg_objective = [sum(fitness_scores) / len(fitness_scores)]
 
     for gen in range(1, max_generations + 1):
-        new_population = []
-
-        new_population.append(best_overall_state.copy())
+        new_population = [best_overall_state.copy()]
 
         while len(new_population) < population_size:
             parent1 = select_parent_roulette(population, fitness_scores)
@@ -123,8 +111,6 @@ def genetic_algorithm(
         history_best_objective.append(gen_best_fitness)
         history_avg_objective.append(gen_avg_fitness)
 
-    execution_time = time.time() - start_time
-
     return {
         "initial_state": first_initial_state,
         "final_state": best_overall_state,
@@ -135,6 +121,6 @@ def genetic_algorithm(
         "total_generations": max_generations,
         "total_iterations": max_generations,
         "total_evaluations": total_evaluations,
-        "execution_time": execution_time,
+        "execution_time": time.time() - start_time,
         "valid": best_overall_state.is_valid()
     }

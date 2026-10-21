@@ -3,14 +3,7 @@ import random
 import time
 from tetangga import generate_random_valid_neighbor
 
-
-def simulated_annealing(
-    initial_state,
-    initial_temperature=1000.0,
-    cooling_rate=0.95,
-    min_temperature=0.01,
-    max_iterations=1500,
-):
+def simulated_annealing(initial_state, initial_temperature=1000.0, cooling_rate=0.95, min_temperature=0.01, max_iterations=1500):
     start_time = time.time()
 
     current_state = initial_state.copy()
@@ -20,7 +13,7 @@ def simulated_annealing(
     best_val = current_val
 
     history_objective = [current_val]
-    history_acceptance_prob = []
+    history_acceptance_prob = [1.0]
 
     iterations = 0
     total_evaluations = 0
@@ -36,6 +29,7 @@ def simulated_annealing(
 
         if next_state is None:
             stuck_count += 1
+            history_acceptance_prob.append(0.0)
             t *= cooling_rate
             continue
 
@@ -50,9 +44,8 @@ def simulated_annealing(
             except OverflowError:
                 prob = 0.0
 
-        history_acceptance_prob.append(prob)
+        history_acceptance_prob.append(round(prob, 4))
 
-        # Accept move if better, or probabilistically if worse
         if delta_e > 0 or random.random() < prob:
             current_state = next_state
             current_val = next_val
@@ -67,8 +60,6 @@ def simulated_annealing(
 
         t *= cooling_rate
 
-    execution_time = time.time() - start_time
-
     return {
         "initial_state": initial_state,
         "final_state": best_state,
@@ -76,9 +67,10 @@ def simulated_annealing(
         "history_objective": history_objective,
         "history_acceptance_prob": history_acceptance_prob,
         "stuck_count": stuck_count,
+        "stuck_frequency": round(stuck_count / max(1, step), 4),
         "total_iterations": iterations,
         "total_evaluations": total_evaluations,
         "final_temperature": t,
-        "execution_time": execution_time,
-        "valid": best_state.is_valid(),
+        "execution_time": time.time() - start_time,
+        "valid": best_state.is_valid()
     }
