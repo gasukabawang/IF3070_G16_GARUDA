@@ -75,11 +75,15 @@ def get_algo_slug(name):
 def get_next_run_number(slug):
     count = 1
     while True:
-        p_json = os.path.join(OUTPUT_DIR, f"run_{slug}_run_{count}.json")
-        p_txt = os.path.join(OUTPUT_DIR, f"run_{slug}_run_{count}.txt")
-        old_j = os.path.join(OUTPUT_DIR, f"run_{slug}_{count}.json")
-        old_t = os.path.join(OUTPUT_DIR, f"run_{slug}_{count}.txt")
-        if not any(os.path.exists(p) for p in [p_json, p_txt, old_j, old_t]):
+        candidates = [
+            f"result_{slug}_{count}.json",
+            f"result_{slug}_{count}.txt",
+            f"run_{slug}_{count}.json",
+            f"run_{slug}_{count}.txt",
+            f"run_{slug}_run_{count}.json",
+            f"run_{slug}_run_{count}.txt"
+        ]
+        if not any(os.path.exists(os.path.join(OUTPUT_DIR, f)) for f in candidates):
             return count
         count += 1
 

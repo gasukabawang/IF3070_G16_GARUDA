@@ -146,7 +146,7 @@ class State:
                     score += (v.shipping_fee / eta_val)
             return round(score)
 
-        elif mode == "space_efficiency":
+        elif mode == "cap_efficiency":
             total_fee = self.get_total_fee()
             deck_area = self.ship.w * self.ship.l
             loaded_area = sum(v.w * v.l for v in self.vehicles if v.is_loaded)
