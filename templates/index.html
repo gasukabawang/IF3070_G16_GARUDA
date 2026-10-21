@@ -4,38 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PT Intim Line Cargo — 2D Cargo Ship Deck Stacking Optimization</title>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
-            --bg-body:      #0b0e14;
-            --surface-1:    #151923;
-            --surface-2:    #1c2230;
-            --surface-3:    #242b3d;
-            --border:       #2a3349;
-            --border-hover: #3b4765;
-            --primary:      #3b82f6;
-            --primary-glow: rgba(59, 130, 246, 0.25);
-            --secondary:    #8b5cf6;
-            --success:      #10b981;
-            --warning:      #f59e0b;
-            --danger:       #ef4444;
-            --text-main:    #f1f5f9;
-            --text-muted:   #94a3b8;
-            --cell-size:    56px;
-            --radius-md:    10px;
-            --radius-lg:    16px;}
+            --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.52);
+            --card-border: rgba(255, 255, 255, 0.85);
+            --card-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+            --glass-inner: rgba(255, 255, 255, 0.45);
+            --glass-inner-border: rgba(255, 255, 255, 0.75);
+            --glass-inner-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 2px 6px rgba(15, 23, 42, 0.02);
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.16);
+            --secondary: #0f172a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --cell-size: 54px;
+            --radius-sm: 12px;
+            --radius-md: 18px;
+            --radius-lg: 26px;
+            --radius-pill: 9999px;
+        }
 
         body {
-            background-color: var(--bg-body);
+            font-family: var(--font-family);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             font-size: 13.5px;
             line-height: 1.5;
             min-height: 100vh;
-            padding: 24px;
+            padding: 32px 28px 48px;
+            background:
+                radial-gradient(circle at 12% 14%, rgba(196, 181, 253, 0.45) 0%, transparent 40%),
+                radial-gradient(circle at 86% 10%, rgba(167, 243, 208, 0.5) 0%, transparent 42%),
+                radial-gradient(circle at 50% 48%, rgba(224, 231, 255, 0.38) 0%, transparent 55%),
+                radial-gradient(circle at 82% 84%, rgba(254, 215, 170, 0.42) 0%, transparent 44%),
+                radial-gradient(circle at 16% 82%, rgba(186, 230, 253, 0.48) 0%, transparent 42%),
+                #f8fafc;
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
         }
 
         .app-container {
@@ -43,89 +62,97 @@
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 22px;
         }
 
         header.app-header {
-            background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.52);
+            backdrop-filter: blur(32px) saturate(190%);
+            -webkit-backdrop-filter: blur(32px) saturate(190%);
+            border: 1.5px solid var(--card-border);
             border-radius: var(--radius-lg);
-            padding: 18px 24px;
+            padding: 24px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            box-shadow: var(--card-shadow);
         }
 
         .header-title {
             display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .header-title .icon {
-            font-size: 32px;
-            background: var(--surface-3);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .header-title h1 {
-            font-size: 19px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: -0.01em;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+            line-height: 1.15;
         }
 
         .header-title p {
             color: var(--text-muted);
-            font-size: 12.5px;
-            margin-top: 2px;
+            font-size: 13.5px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
         }
 
         .header-tag {
-            background: rgba(59, 130, 246, 0.12);
-            color: var(--primary);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 999px;
-            padding: 6px 14px;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.03em;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: var(--text-main);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: var(--radius-pill);
+            padding: 8px 20px;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-tag::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10b981;
         }
 
         .workspace-grid {
             display: grid;
             grid-template-columns: 310px 1fr 310px;
-            gap: 20px;
+            gap: 22px;
             align-items: start;
         }
 
         .card {
-            background: var(--surface-1);
-            border: 1px solid var(--border);
+            background: var(--card-bg);
+            backdrop-filter: blur(32px) saturate(190%);
+            -webkit-backdrop-filter: blur(32px) saturate(190%);
+            border: 1.5px solid var(--card-border);
             border-radius: var(--radius-lg);
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
         }
 
         .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
         }
 
         .card-header h2 {
             font-size: 13.5px;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-muted);
@@ -135,29 +162,34 @@
         }
 
         .form-group {
-            margin-bottom: 14px;
+            margin-bottom: 15px;
         }
 
         .form-group label {
             display: block;
             font-size: 11.5px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-muted);
-            margin-bottom: 6px;
+            margin-bottom: 7px;
         }
 
         select.form-control, input.form-control {
             width: 100%;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
+            background: var(--glass-inner);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-inner-border);
+            border-radius: 14px;
             color: var(--text-main);
-            padding: 9px 12px;
+            padding: 10px 14px;
             font-size: 13px;
+            font-family: var(--font-family);
+            font-weight: 600;
             outline: none;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--glass-inner-shadow);
         }
 
         input[type="number"]::-webkit-outer-spin-button,
@@ -170,34 +202,39 @@
         }
 
         select.form-control:focus, input.form-control:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+            border-color: rgba(99, 102, 241, 0.7);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 4px var(--primary-glow);
         }
 
         .dynamic-params {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-inner-border);
             border-radius: var(--radius-md);
-            padding: 12px;
+            padding: 14px;
             margin-top: 10px;
             margin-bottom: 16px;
+            box-shadow: var(--glass-inner-shadow);
         }
 
         .btn-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         button.btn {
             width: 100%;
-            padding: 10px 14px;
+            padding: 11px 20px;
             border: none;
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-pill);
             font-size: 13px;
-            font-weight: 600;
+            font-family: var(--font-family);
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -205,7 +242,7 @@
         }
 
         button.btn:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
         }
 
         button.btn:disabled {
@@ -215,53 +252,73 @@
         }
 
         .btn-outline {
-            background: var(--surface-2);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             color: var(--text-main);
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-inner-border);
+            box-shadow: var(--glass-inner-shadow);
         }
         .btn-outline:hover:not(:disabled) {
-            background: var(--surface-3);
-            border-color: var(--border-hover);
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+            transform: translateY(-1px);
         }
 
         .btn-step {
-            background: var(--primary);
-            color: #ffffff;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: var(--text-main);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
         }
         .btn-step:hover:not(:disabled) {
-            background: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+            transform: translateY(-1px);
         }
 
         .btn-run {
-            background: var(--secondary);
+            background: #0f172a;
             color: #ffffff;
+            border: 1px solid #0f172a;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
         }
         .btn-run:hover:not(:disabled) {
-            background: #7c3aed;
+            background: #1e293b;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.35);
+            transform: translateY(-1px);
         }
 
         .btn-auto.running {
-            background: var(--danger);
+            background: #ef4444;
+            border-color: #ef4444;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
         }
 
         .mode-toggle-wrap {
             display: flex;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 3px;
-            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.42);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid var(--glass-inner-border);
+            border-radius: var(--radius-pill);
+            padding: 4px;
+            margin-top: 14px;
             gap: 4px;
+            box-shadow: var(--glass-inner-shadow);
         }
 
         .mode-tab {
             flex: 1;
-            padding: 8px 10px;
+            padding: 8px 14px;
             border: none;
-            border-radius: 7px;
+            border-radius: var(--radius-pill);
             background: transparent;
             color: var(--text-muted);
             font-size: 12px;
+            font-family: var(--font-family);
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -276,238 +333,309 @@
         }
 
         .mode-tab.active {
-            background: var(--primary);
-            color: #ffffff;
-            box-shadow: 0 2px 8px var(--primary-glow);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: var(--text-main);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9);
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 18px;
+            gap: 14px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 12px 14px;
+            border-radius: 20px;
+            padding: 18px 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
+            position: relative;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px -8px rgba(15, 23, 42, 0.07);
         }
 
+        .stat-card-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            border: 1.5px solid currentColor;
+            background: transparent;
+        }
+
+        .stat-card-purple {
+            background: linear-gradient(135deg, rgba(243, 232, 255, 0.72) 0%, rgba(250, 245, 255, 0.45) 100%);
+            border: 1px solid rgba(221, 214, 254, 0.85);
+            color: #7c3aed;
+        }
+        .stat-card-purple .stat-value { color: #5b21b6; }
+
+        .stat-card-blue {
+            background: linear-gradient(135deg, rgba(224, 242, 254, 0.72) 0%, rgba(240, 249, 255, 0.45) 100%);
+            border: 1px solid rgba(186, 230, 253, 0.85);
+            color: #0284c7;
+        }
+        .stat-card-blue .stat-value { color: #0369a1; }
+
+        .stat-card-green {
+            background: linear-gradient(135deg, rgba(220, 252, 231, 0.72) 0%, rgba(240, 253, 244, 0.45) 100%);
+            border: 1px solid rgba(167, 243, 208, 0.85);
+            color: #059669;
+        }
+        .stat-card-green .stat-value { color: #047857; }
+
         .stat-card .stat-label {
-            font-size: 10.5px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             color: var(--text-muted);
-            margin-bottom: 4px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
         .stat-card .stat-value {
-            font-size: 20px;
+            font-size: 26px;
             font-weight: 800;
-            color: #ffffff;
             line-height: 1.1;
+            letter-spacing: -0.03em;
         }
 
-        .stat-value.highlight-blue   { color: var(--primary); }
-        .stat-value.highlight-green  { color: var(--success); }
-        .stat-value.highlight-yellow { color: var(--warning); }
-        .stat-value.highlight-red    { color: var(--danger); }
-
         .capacity-bar-container {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
+            background: var(--glass-inner);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-inner-border);
             border-radius: var(--radius-md);
-            padding: 12px 16px;
-            margin-bottom: 18px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--glass-inner-shadow);
         }
 
         .capacity-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 11.5px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             color: var(--text-muted);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .progress-track {
-            background: var(--surface-3);
-            border-radius: 999px;
+            background: rgba(226, 232, 240, 0.75);
+            border-radius: var(--radius-pill);
             height: 10px;
             overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background: var(--success);
-            border-radius: 999px;
-            transition: width 0.4s ease, background-color 0.4s ease;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: var(--radius-pill);
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease;
         }
 
-        .progress-fill.warn { background: var(--warning); }
-        .progress-fill.over { background: var(--danger); }
+        .progress-fill.warn { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .progress-fill.over { background: linear-gradient(90deg, #ef4444, #dc2626); }
 
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 5px 12px;
-            border-radius: 999px;
-            font-size: 11.5px;
+            padding: 6px 14px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
             font-weight: 700;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
-        .status-badge.valid   { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
-        .status-badge.invalid { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-        .status-badge.stuck   { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-badge.valid   { background: rgba(16, 185, 129, 0.12); color: #047857; border: 1px solid rgba(16, 185, 129, 0.35); }
+        .status-badge.invalid { background: rgba(239, 68, 68, 0.12); color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.35); }
+        .status-badge.stuck   { background: rgba(245, 158, 11, 0.12); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.35); }
 
         .deck-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 16px;
-            padding: 16px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
+            padding: 22px;
+            background: rgba(255, 255, 255, 0.38);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1.5px solid var(--glass-inner-border);
+            border-radius: 22px;
+            box-shadow: var(--glass-inner-shadow);
         }
 
         .deck-grid {
             display: grid;
-            gap: 5px;
-            background: var(--surface-1);
-            border: 2px dashed var(--border);
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1.5px dashed rgba(148, 163, 184, 0.45);
             border-radius: var(--radius-md);
-            padding: 14px;
+            padding: 16px;
         }
 
         .deck-cell {
             width: var(--cell-size);
             height: var(--cell-size);
-            border-radius: 6px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 800;
             user-select: none;
-            transition: all 0.25s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .cell-empty {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
             color: transparent;
         }
 
         .cell-loaded {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
             color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .cell-clash {
-            background: rgba(239, 68, 68, 0.4) !important;
+            background: rgba(239, 68, 68, 0.45) !important;
             border: 2px solid var(--danger) !important;
             color: #ffffff !important;
-            animation: pulse-clash 1s infinite;
+            animation: pulse-clash 0.8s infinite;
         }
 
         @keyframes pulse-clash {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(0.97); }
+            50% { opacity: 0.7; transform: scale(0.96); }
         }
 
         .message-box {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--primary);
-            border-radius: var(--radius-md);
-            padding: 12px 14px;
+            background: var(--glass-inner);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-inner-border);
+            border-left: 4px solid var(--primary);
+            border-radius: 16px;
+            padding: 12px 16px;
             font-size: 12.5px;
+            font-weight: 500;
             min-height: 44px;
             display: flex;
             align-items: center;
             color: var(--text-main);
+            box-shadow: var(--glass-inner-shadow);
         }
 
         .vehicle-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 9px;
             max-height: none;
             overflow-y: visible;
             padding-right: 0;
         }
 
         .vehicle-item {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 8px 10px;
+            background: var(--glass-inner);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-inner-border);
+            border-radius: 16px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: border-color 0.2s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--glass-inner-shadow);
+        }
+        .vehicle-item:hover {
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.65);
         }
 
         .vehicle-item.is-loaded {
-            border-left: 3px solid var(--success);
+            border-left: 4px solid var(--success);
         }
 
         .vehicle-item.is-parked {
-            border-left: 3px solid var(--border);
-            opacity: 0.65;
+            border-left: 4px solid rgba(203, 213, 225, 0.8);
+            opacity: 0.75;
         }
 
         .v-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .v-color-tag {
-            width: 10px;
-            height: 10px;
-            border-radius: 3px;
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
         }
 
         .v-id {
-            font-weight: 700;
-            color: #ffffff;
+            font-weight: 800;
+            color: var(--text-main);
+            font-size: 13px;
         }
 
         .v-meta {
             font-size: 11.5px;
             color: var(--text-muted);
+            font-weight: 500;
         }
 
         .v-badge {
-            font-size: 10.5px;
+            font-size: 11px;
             font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 999px;
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
-        .v-badge.badge-loaded { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .v-badge.badge-parked { background: var(--surface-3); color: var(--text-muted); }
+        .v-badge.badge-loaded { background: rgba(16, 185, 129, 0.15); color: #047857; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .v-badge.badge-parked { background: rgba(255, 255, 255, 0.6); color: var(--text-muted); border: 1px solid rgba(203, 213, 225, 0.6); }
 
         .chart-card {
-            margin-top: 20px;
+            margin-top: 22px;
         }
 
         .history-card {
-            margin-top: 20px;
+            margin-top: 22px;
         }
 
         .table-responsive {
             overflow-x: auto;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--border);
+            border-radius: 20px;
+            border: 1.5px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.04);
         }
 
         table.history-table {
@@ -518,47 +646,53 @@
         }
 
         table.history-table th, table.history-table td {
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border);
+            padding: 12px 18px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.7);
         }
 
         table.history-table th {
-            background: var(--surface-2);
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             color: var(--text-muted);
             text-transform: uppercase;
-            font-size: 10.5px;
-            font-weight: 700;
+            font-size: 11px;
+            font-weight: 800;
             letter-spacing: 0.05em;
         }
 
         table.history-table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.4);
         }
 
         table.history-table tfoot tr {
-            background: var(--surface-3);
+            background: rgba(255, 255, 255, 0.65);
             font-weight: 700;
         }
 
         table.history-table tfoot td {
-            border-top: 2px solid var(--border);
-            color: #ffffff;
+            border-top: 2px solid rgba(203, 213, 225, 0.8);
+            color: var(--text-main);
         }
 
         .btn-clear {
-            background: transparent;
+            background: var(--glass-inner);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             color: var(--text-muted);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 4px 10px;
-            font-size: 11px;
-            font-weight: 600;
+            border: 1px solid var(--glass-inner-border);
+            border-radius: var(--radius-pill);
+            padding: 6px 16px;
+            font-size: 11.5px;
+            font-family: var(--font-family);
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--glass-inner-shadow);
         }
         .btn-clear:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.4);
             color: var(--danger);
         }
     </style>
@@ -569,27 +703,26 @@
 
     <header class="app-header">
         <div class="header-title">
-            <div class="icon">🚢</div>
-            <div>
-                <h1>PT Intim Line Cargo — 2D Cargo Ship Deck Stacking</h1>
-                <p>IF3070 Artificial Intelligence · Cargo Carrier Deck Optimization (Stochastic & Random Restart)</p>
-            </div>
+            <h1>PT Intim Line Cargo — 2D Deck Stacking</h1>
+            <p>Cargo Carrier Deck Optimization Platform · IF3070 Artificial Intelligence</p>
         </div>
-        <div class="header-tag">Group G16 GARUDA</div>
+        <div>
+            <div class="header-tag">Group G16 GARUDA</div>
+        </div>
     </header>
 
     <div class="workspace-grid">
 
         <div class="card">
             <div class="card-header">
-                <h2>⚙️ Algorithm Controls</h2>
+                <h2>Algorithm Controls</h2>
             </div>
 
             <div class="form-group">
                 <label for="algoSelect">Optimization Algorithm</label>
                 <select id="algoSelect" class="form-control">
                     <option value="stochastic">Stochastic Hill-Climbing</option>
-                    <option value="random_restart">Random Restart Hill-Climbing</option>
+                    <option value="restart">Random Restart Hill-Climbing</option>
                 </select>
             </div>
 
@@ -606,40 +739,43 @@
             </div>
 
             <div class="mode-toggle-wrap">
-                <button type="button" class="mode-tab active" id="tabModeFast" onclick="setExecutionMode('fast')">⚡ Fast Mode</button>
-                <button type="button" class="mode-tab" id="tabModeAnimate" onclick="setExecutionMode('animate')">🎬 Animated Mode</button>
+                <button type="button" class="mode-tab active" id="tabModeFast" onclick="setExecutionMode('fast')">Fast Mode</button>
+                <button type="button" class="mode-tab" id="tabModeAnimate" onclick="setExecutionMode('animate')">Animated Mode</button>
             </div>
 
-            <div class="btn-group" style="margin-top: 10px;">
-                <button class="btn btn-outline" onclick="doReset()">🔄 Reset Initial State</button>
-                <button class="btn btn-step" id="btnStep" onclick="doStep()">👣 Single Step</button>
-                <button class="btn btn-run" id="btnRun" onclick="handleRunAlgorithm()">▶️ Run Algorithm</button>
+            <div class="btn-group" style="margin-top: 14px;">
+                <button class="btn btn-outline" onclick="doReset()">Reset Initial State</button>
+                <button class="btn btn-step" id="btnStep" onclick="doStep()">Single Step</button>
+                <button class="btn btn-run" id="btnRun" onclick="handleRunAlgorithm()">Run Algorithm</button>
             </div>
 
-            <div style="margin-top: 16px;">
-                <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Status Log</label>
-                <div class="message-box" id="msgBox" style="margin-top: 6px;">Ready. Click Reset or Run.</div>
+            <div style="margin-top: 20px;">
+                <label style="font-size: 11.5px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Status Log</label>
+                <div class="message-box" id="msgBox" style="margin-top: 7px;">Ready. Click Reset or Run.</div>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h2>🚢 Ship Deck Stacking Visualizer (6×6 Grid)</h2>
-                <div id="statusBadge" class="status-badge valid">✅ Valid Deck Placement</div>
+                <h2>Deck Stacking Visualizer</h2>
+                <div id="statusBadge" class="status-badge valid">Valid Deck Placement</div>
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card stat-card-purple">
+                    <div class="stat-card-badge"></div>
                     <span class="stat-label">Objective Score</span>
-                    <span class="stat-value highlight-blue" id="valScore">0</span>
+                    <span class="stat-value" id="valScore">0</span>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-blue">
+                    <div class="stat-card-badge"></div>
                     <span class="stat-label">Valid Iterations</span>
                     <span class="stat-value" id="valIter">0</span>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-green">
+                    <div class="stat-card-badge"></div>
                     <span class="stat-label">Trial Evaluations</span>
-                    <span class="stat-value highlight-green" id="valEvals">0</span>
+                    <span class="stat-value" id="valEvals">0</span>
                 </div>
             </div>
 
@@ -655,7 +791,7 @@
 
             <div class="deck-wrapper">
                 <div class="deck-grid" id="deckGridContainer"></div>
-                <div style="font-size: 11.5px; color: var(--text-muted); text-align: center;">
+                <div style="font-size: 12px; color: var(--text-muted); text-align: center; font-weight: 500;">
                     Each cell represents 1×1 meter deck area. Vehicles with borders are loaded on the carrier deck.
                 </div>
             </div>
@@ -663,8 +799,8 @@
 
         <div class="card" style="max-height: none !important; overflow: visible !important;">
             <div class="card-header">
-                <h2>🚗 Cargo Manifest</h2>
-                <span style="font-size: 11.5px; color: var(--text-muted);" id="manifestCount">0 Vehicles</span>
+                <h2>Cargo Manifest</h2>
+                <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;" id="manifestCount">0 Vehicles</span>
             </div>
 
             <div class="vehicle-list" id="vehicleListContainer" style="max-height: none !important; overflow: visible !important; height: auto !important;"></div>
@@ -674,7 +810,7 @@
 
     <div class="card chart-card">
         <div class="card-header">
-            <h2>📈 Real-Time Objective Function Trajectory</h2>
+            <h2>Objective Function Trajectory</h2>
         </div>
         <div style="position: relative; height: 260px; width: 100%;">
             <canvas id="objectiveChart"></canvas>
@@ -683,8 +819,8 @@
 
     <div class="card history-card">
         <div class="card-header">
-            <h2>📊 Experiment History Log</h2>
-            <button class="btn-clear" onclick="clearHistory()">🗑️ Clear History</button>
+            <h2>Experiment History Log</h2>
+            <button class="btn-clear" onclick="clearHistory()">Clear History</button>
         </div>
 
         <div class="table-responsive">
@@ -725,9 +861,9 @@ let runCounter = 0;
 let historyRecords = [];
 
 const PALETTE = [
-    '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b',
-    '#ec4899', '#06b6d4', '#84cc16', '#f97316',
-    '#6366f1', '#14b8a6', '#f43f5e', '#eab308'
+    '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
+    '#8b5cf6', '#ec4899', '#0d9488', '#f97316',
+    '#3b82f6', '#06b6d4', '#e11d48', '#84cc16'
 ];
 let vehicleColorMap = {};
 
@@ -751,8 +887,9 @@ function formatNumber(num) {
 
 function syncDynamicParams() {
     const algo = document.getElementById('algoSelect').value;
-    document.getElementById('grpMaxIter').style.display = 'block';
-    document.getElementById('grpMaxRestarts').style.display = (algo === 'random_restart') ? 'block' : 'none';
+
+    document.getElementById('grpMaxIter').style.display     = 'block';
+    document.getElementById('grpMaxRestarts').style.display = (algo === 'restart') ? 'block' : 'none';
 }
 
 document.getElementById('algoSelect').addEventListener('change', function() {
@@ -773,6 +910,7 @@ function getParamPayload() {
 let executionMode = 'fast';
 let animationStartTime = null;
 let sessionStartTime = null;
+let algoTerminated = false;
 
 function setExecutionMode(mode) {
     executionMode = mode;
@@ -786,16 +924,16 @@ function updateRunButtonText() {
     const btn = document.getElementById('btnRun');
     if (!btn) return;
     if (autoTimer) {
-        btn.textContent = '⏸️ Pause Animation';
+        btn.textContent = 'Pause Animation';
         btn.classList.add('running');
     } else {
         btn.classList.remove('running');
-        btn.textContent = (executionMode === 'animate') ? '▶️ Start Animation' : '▶️ Run Algorithm';
+        btn.textContent = (executionMode === 'animate') ? 'Start Animation' : 'Run Algorithm';
     }
 }
 
 function formatParams(payload) {
-    if (payload.algorithm === 'random_restart') {
+    if (payload.algorithm === 'restart') {
         return `Restarts: ${payload.max_restarts}, Max Iter: ${payload.max_iterations}`;
     }
     return `Max Iter: ${payload.max_iterations}`;
@@ -807,12 +945,12 @@ let lastPlottedIter = -1;
 const datasetBest = {
     label: 'Objective Score ($)',
     data: [0],
-    borderColor: '#3b82f6',
-    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+    borderColor: '#6366f1',
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
     borderWidth: 2.5,
     pointStyle: 'line',
     fill: true,
-    tension: 0.2,
+    tension: 0.25,
     pointRadius: 2.5,
     pointHoverRadius: 5
 };
@@ -834,34 +972,38 @@ function initChart() {
             animation: { duration: 150 },
             scales: {
                 x: {
-                    title: { display: true, text: 'Valid Iterations', color: '#94a3b8', font: { size: 11, weight: '600' } },
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#94a3b8', font: { size: 10.5 } }
+                    title: { display: true, text: 'Valid Iterations', color: '#64748b', font: { size: 11, weight: '700', family: "'Plus Jakarta Sans'" } },
+                    grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                    ticks: { color: '#64748b', font: { size: 11, family: "'Plus Jakarta Sans'" } }
                 },
                 y: {
-                    title: { display: true, text: 'Shipping Fee ($)', color: '#94a3b8', font: { size: 11, weight: '600' } },
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#94a3b8', font: { size: 10.5 } }
+                    title: { display: true, text: 'Shipping Fee ($)', color: '#64748b', font: { size: 11, weight: '700', family: "'Plus Jakarta Sans'" } },
+                    grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                    ticks: { color: '#64748b', font: { size: 11, family: "'Plus Jakarta Sans'" } }
                 }
             },
             plugins: {
                 legend: {
                     display: true,
                     labels: {
-                        color: '#f1f5f9',
-                        font: { size: 11.5, weight: '600' },
+                        color: '#0f172a',
+                        font: { size: 12, weight: '700', family: "'Plus Jakarta Sans'" },
                         usePointStyle: true,
                         pointStyle: 'line',
-                        boxWidth: 26,
+                        boxWidth: 24,
                         boxHeight: 2
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#1c2230',
-                    titleColor: '#f1f5f9',
-                    bodyColor: '#94a3b8',
-                    borderColor: '#2a3349',
-                    borderWidth: 1
+                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e2e8f0',
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    padding: 10,
+                    titleFont: { family: "'Plus Jakarta Sans'", weight: '700' },
+                    bodyFont: { family: "'Plus Jakarta Sans'" }
                 }
             }
         }
@@ -870,10 +1012,14 @@ function initChart() {
 
 function resetChart(initialScore = 0) {
     if (!objChart) return;
+
     lastPlottedIter = 0;
     datasetBest.data = [initialScore];
+    datasetBest.label = 'Objective Score ($)';
+
     objChart.data.datasets = [datasetBest];
     objChart.data.labels = [0];
+    objChart.options.scales.x.title.text = 'Valid Iterations';
     objChart.update();
 }
 
@@ -890,9 +1036,13 @@ function addChartPoint(iter, score) {
 function setFullChartData(labels, bestData) {
     if (!objChart) return;
     lastPlottedIter = labels.length > 0 ? labels[labels.length - 1] : 0;
+
     objChart.data.labels = labels;
     datasetBest.data = bestData;
+    datasetBest.label = 'Objective Score ($)';
+
     objChart.data.datasets = [datasetBest];
+    objChart.options.scales.x.title.text = 'Valid Iterations';
     objChart.update();
 }
 
@@ -900,6 +1050,7 @@ async function doReset() {
     stopAuto();
     animationStartTime = null;
     sessionStartTime = null;
+    algoTerminated = false;
     try {
         const res = await fetch('/api/reset', { method: 'POST' });
         const data = await res.json();
@@ -911,8 +1062,11 @@ async function doReset() {
 }
 
 async function doStep() {
+    if (algoTerminated) return;
+
     try {
         const payload = getParamPayload();
+
         if (sessionStartTime === null) {
             sessionStartTime = performance.now();
         }
@@ -926,15 +1080,18 @@ async function doStep() {
 
         if (data.trial_clash) {
             renderDeckGrid(data.trial_clash.grid, data.ship_w, data.ship_l, true);
-            document.getElementById('msgBox').textContent = '⚡ Trial Evaluation: Detected constraint clash — rejected!';
+            document.getElementById('msgBox').textContent = 'Trial Evaluation: Detected constraint clash (overlap / bounds violation) — rejected!';
             await new Promise(r => setTimeout(r, 65));
         }
 
         updateUI(data);
+
         addChartPoint(data.iter, data.score);
 
         if (data.is_stuck) {
+            algoTerminated = true;
             stopAuto();
+
             const elapsedSec = Math.max(0.001, (performance.now() - (sessionStartTime || performance.now())) / 1000);
             const algoSelect = document.getElementById('algoSelect');
             const algoName = algoSelect.options[algoSelect.selectedIndex].text;
@@ -970,7 +1127,7 @@ async function doRunFull() {
     stopAuto();
     const btn = document.getElementById('btnRun');
     btn.disabled = true;
-    btn.textContent = '⏳ Optimizing...';
+    btn.textContent = 'Optimizing...';
 
     resetChart(parseInt(document.getElementById('valScore').textContent.replace(/,/g, '')) || 0);
 
@@ -986,6 +1143,7 @@ async function doRunFull() {
 
         if (data.run_metric) {
             recordHistory(data.run_metric);
+
             const bestHistory = data.run_metric.history_best || [];
             const labels = Array.from({ length: bestHistory.length }, (_, i) => i);
             setFullChartData(labels, bestHistory);
@@ -1032,13 +1190,13 @@ function updateUI(data) {
     const badge = document.getElementById('statusBadge');
     if (data.is_stuck) {
         badge.className = 'status-badge stuck';
-        badge.textContent = '⚠️ Local Optimum Reached';
+        badge.textContent = 'Local Optimum Reached';
     } else if (data.valid) {
         badge.className = 'status-badge valid';
-        badge.textContent = '✅ Valid Deck Placement';
+        badge.textContent = 'Valid Deck Placement';
     } else {
         badge.className = 'status-badge invalid';
-        badge.textContent = '❌ Invalid Placement';
+        badge.textContent = 'Invalid Placement';
     }
 
     const curWeight = data.total_weight || 0;
@@ -1075,20 +1233,20 @@ function renderDeckGrid(grid, w, l, isClashFlash = false) {
                 div.classList.add('cell-clash');
                 div.style.borderColor = '#ef4444';
                 div.style.background = 'rgba(239, 68, 68, 0.55)';
-                div.textContent = '💥';
+                div.textContent = '!';
                 div.title = `Trial Clash: ${cell.vehicles.join(', ')}`;
             } else if (cell.count === 0) {
                 div.classList.add('cell-empty');
             } else if (cell.count > 1) {
                 div.classList.add('cell-clash');
-                div.textContent = '💥';
+                div.textContent = '!';
                 div.title = `Clash: ${cell.vehicles.join(', ')}`;
             } else {
                 const vid = cell.vehicles[0];
-                const color = vehicleColorMap[vid] || '#3b82f6';
+                const color = vehicleColorMap[vid] || '#6366f1';
                 div.classList.add('cell-loaded');
-                div.style.backgroundColor = hexToRgba(color, 0.85);
-                div.style.borderColor = color;
+                div.style.backgroundColor = hexToRgba(color, 0.88);
+                div.style.borderColor = 'rgba(255, 255, 255, 0.85)';
                 div.textContent = vid;
                 div.title = vid;
             }
@@ -1116,7 +1274,7 @@ function renderVehicleList(vehicles) {
                 </div>
             </div>
             <div class="v-badge ${v.is_loaded ? 'badge-loaded' : 'badge-parked'}">
-                ${v.is_loaded ? '✓ Loaded' : 'Parking'}
+                ${v.is_loaded ? 'Loaded' : 'Parking'}
             </div>
         `;
         container.appendChild(item);
@@ -1141,14 +1299,14 @@ function recordHistory(metric) {
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
-        <td style="font-weight: 700;">Run #${record.runNo}</td>
+        <td style="font-weight: 800;">Run #${record.runNo}</td>
         <td><strong>${record.algorithm}</strong></td>
         <td style="color: var(--text-muted); font-size: 11.5px;">${record.parameters}</td>
-        <td style="color: var(--primary); font-weight: 700;">$${formatNumber(record.score)}</td>
+        <td style="color: var(--primary); font-weight: 800;">$${formatNumber(record.score)}</td>
         <td>${formatNumber(record.iterations)}</td>
         <td>${formatNumber(record.evaluations)}</td>
         <td>${record.executionTime.toFixed(4)}s</td>
-        <td>${record.valid ? '✅ Valid' : '❌ Invalid'}</td>
+        <td>${record.valid ? 'Valid' : 'Invalid'}</td>
     `;
     tbody.appendChild(tr);
 
