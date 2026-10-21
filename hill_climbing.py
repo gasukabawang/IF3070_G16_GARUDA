@@ -1,7 +1,44 @@
-import random
 import time
-from tetangga import generate_all_neighbors
+import random
+from tetangga import generate_all_neighbors, initial_random_state
 
+def steepest_ascent_hill_climbing(initial_state, max_iterations=1000):
+    start_time = time.time()
+    current_state = initial_state.copy()
+    current_val = current_state.calculate_objective()
+
+    history_objective = [current_val]
+    iterations = 0
+    total_evaluations = 0
+
+    while iterations < max_iterations:
+        valid_neighbors, trial_evals = generate_all_neighbors(current_state)
+        total_evaluations += trial_evals
+
+        if not valid_neighbors:
+            break
+
+        best_val = max(n.calculate_objective() for n in valid_neighbors)
+
+        if best_val <= current_val:
+            break
+
+        best_candidates = [n for n in valid_neighbors if n.calculate_objective() == best_val]
+        current_state = random.choice(best_candidates)
+        current_val = best_val
+        iterations += 1
+        history_objective.append(current_val)
+
+    return {
+        "initial_state": initial_state,
+        "final_state": current_state,
+        "best_objective": current_val,
+        "history_objective": history_objective,
+        "total_iterations": iterations,
+        "total_evaluations": total_evaluations,
+        "execution_time": time.time() - start_time,
+        "valid": current_state.is_valid()
+    }
 
 def sideways_move_hill_climbing(initial_state, max_sideways_moves=50, max_iterations=1000):
     start_time = time.time()

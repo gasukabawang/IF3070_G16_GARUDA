@@ -1,16 +1,16 @@
+import time
 import math
 import random
-import time
-from flask import Flask, jsonify, render_template, request
-from model import Ship
-from tetangga import generate_all_neighbors, generate_random_valid_neighbor, initial_random_state
-from hill_climbing import sideways_move_hill_climbing
-from simulated_annealing import simulated_annealing
+from flask import Flask, render_template, jsonify, request
+from model import Ship, Vehicle
+from tetangga import initial_random_state, generate_all_neighbors, generate_random_valid_neighbor
+from hill_climbing import steepest_ascent_hill_climbing
+from genetic_algorithm import genetic_algorithm, crossover, mutate, select_parent_roulette
 
 app = Flask(__name__)
 
-# Ship configuration & vehicle dataset
 default_ship = Ship(w=6, l=6, MaxCapacity=100)
+
 default_vehicles_data = [
     {"v_id": "V1", "w": 2, "l": 2, "fee": 5000, "weight": 20, "eta": 1},
     {"v_id": "V2", "w": 2, "l": 3, "fee": 7000, "weight": 30, "eta": 1},
@@ -22,7 +22,6 @@ default_vehicles_data = [
     {"v_id": "V8", "w": 3, "l": 2, "fee": 8000, "weight": 35, "eta": 3},
 ]
 
-# Session state
 current_state = None
 current_iter = 0
 total_evaluations = 0
