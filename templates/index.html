@@ -784,7 +784,7 @@
                 <div class="form-group">
                     <label for="algoSelect">Optimization Algorithm</label>
                     <select id="algoSelect" class="form-control">
-                        <option value="sideways" selected>Hill-Climbing with Sideways Move</option>
+                        <option value="sideways">Hill-Climbing with Sideways Move</option>
                         <option value="simulated_annealing">Simulated Annealing</option>
                     </select>
                 </div>
@@ -806,6 +806,7 @@
                         <input type="number" id="inputInitialTemp" class="form-control" value="1000" min="10"
                             max="50000" step="50" />
                     </div>
+
                     <div class="form-group" id="grpCoolingRate" style="display: none;">
                         <label for="inputCoolingRate">Cooling Rate (Alpha)</label>
                         <input type="number" id="inputCoolingRate" class="form-control" value="0.95" min="0.5"
@@ -822,6 +823,7 @@
 
                 <div class="btn-group" style="margin-top: 14px;">
                     <button class="btn btn-outline" onclick="doReset()">Reset Initial State</button>
+                    <button class="btn btn-step" id="btnStep" onclick="doStep()">Single Step</button>
                     <button class="btn btn-run" id="btnRun" onclick="handleRunAlgorithm()">Run Algorithm</button>
                 </div>
 
@@ -967,8 +969,6 @@
 
         function syncDynamicParams() {
             const algo = document.getElementById('algoSelect').value;
-
-            document.getElementById('grpMaxIter').style.display = 'block';
             document.getElementById('grpMaxSideways').style.display = (algo === 'sideways') ? 'block' : 'none';
             document.getElementById('grpInitialTemp').style.display = (algo === 'simulated_annealing') ? 'block' : 'none';
             document.getElementById('grpCoolingRate').style.display = (algo === 'simulated_annealing') ? 'block' : 'none';
@@ -984,7 +984,7 @@
             const algo = document.getElementById('algoSelect').value;
             return {
                 algorithm: algo,
-                max_iterations: parseInt(document.getElementById('inputMaxIter').value) || 1000,
+                max_iterations: parseInt(document.getElementById('inputMaxIter').value) || 500,
                 max_sideways_moves: parseInt(document.getElementById('inputMaxSideways').value) || 100,
                 initial_temperature: parseFloat(document.getElementById('inputInitialTemp').value) || 1000.0,
                 cooling_rate: parseFloat(document.getElementById('inputCoolingRate').value) || 0.95
@@ -1039,18 +1039,6 @@
             tension: 0.25,
             pointRadius: 2.5,
             pointHoverRadius: 5
-        };
-
-        const datasetAvg = {
-            label: 'Population Avg Fitness ($)',
-            data: [],
-            borderColor: '#10b981',
-            borderDash: [5, 5],
-            borderWidth: 2,
-            pointStyle: 'line',
-            fill: false,
-            tension: 0.25,
-            pointRadius: 0
         };
 
         function initChart() {
@@ -1113,11 +1101,8 @@
 
             lastPlottedIter = 0;
             datasetBest.data = [initialScore];
-            datasetBest.label = 'Objective Score ($)';
-            datasetAvg.data = [];
             objChart.data.datasets = [datasetBest];
             objChart.data.labels = [0];
-            objChart.options.scales.x.title.text = 'Valid Iterations';
             objChart.update();
         }
 
@@ -1137,10 +1122,7 @@
 
             objChart.data.labels = labels;
             datasetBest.data = bestData;
-            datasetBest.label = 'Objective Score ($)';
-            datasetAvg.data = [];
             objChart.data.datasets = [datasetBest];
-            objChart.options.scales.x.title.text = 'Valid Iterations';
             objChart.update();
         }
 
@@ -1152,66 +1134,10 @@
             try {
                 const res = await fetch('/api/reset', { method: 'POST' });
                 const data = await res.json();
-
-                // Reset menggunakan initial_state dari /api/reset
-                const state = data.initial_state;
-                const ship = data.ship;
-                if (state) {
-                    document.getElementById('valScore').textContent = formatNumber(state.score);
-                    document.getElementById('valIter').textContent = '0';
-                    document.getElementById('valEvals').textContent = '0';
-
-                    const badge = document.getElementById('statusBadge');
-                    badge.className = 'status-badge valid';
-                    badge.textContent = 'Valid Deck Placement';
-
-                    const curWeight = state.total_weight || 0;
-                    const maxCapacity = ship ? ship.max_capacity : 100;
-                    const pct = Math.min(100, Math.round((curWeight / maxCapacity) * 100));
-                    const fill = document.getElementById('capacityFill');
-                    fill.style.width = pct + '%';
-                    fill.className = 'progress-fill' + (pct > 100 ? ' over' : pct > 80 ? ' warn' : '');
-                    document.getElementById('capacityLabel').textContent = `${curWeight} / ${maxCapacity} Tons (${pct}%)`;
-                    document.getElementById('msgBox').textContent = 'State awal direset. Siap menjalankan algoritma.';
-
-                    // Assign warna kendaraan
-                    (state.vehicles || []).forEach((v, idx) => getVehicleColor(v.id, idx));
-
-                    // Render grid
-                    const grid = state.grid;
-                    if (grid && grid.length) {
-                        const rows = grid.length;
-                        const cols = grid[0].length;
-                        const container = document.getElementById('deckGridContainer');
-                        container.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size))`;
-                        container.style.gridTemplateRows = `repeat(${rows}, var(--cell-size))`;
-                        container.innerHTML = '';
-                        for (let r = 0; r < rows; r++) {
-                            for (let c = 0; c < cols; c++) {
-                                const val = grid[r][c];
-                                const div = document.createElement('div');
-                                div.className = 'deck-cell';
-                                if (val === 0 || val === null || val === '') {
-                                    div.classList.add('cell-empty');
-                                } else {
-                                    const vid = String(val);
-                                    const color = vehicleColorMap[vid] || '#6366f1';
-                                    div.classList.add('cell-loaded');
-                                    div.style.backgroundColor = hexToRgba(color, 0.88);
-                                    div.style.borderColor = 'rgba(255, 255, 255, 0.85)';
-                                    div.textContent = vid;
-                                    div.title = vid;
-                                }
-                                container.appendChild(div);
-                            }
-                        }
-                    }
-                    renderVehicleList(state.vehicles || []);
-                }
-                resetChart(state ? state.score : 0);
+                updateUI(data);
+                resetChart(data.score);
             } catch (e) {
                 console.error('Reset error:', e);
-                document.getElementById('msgBox').textContent = 'Gagal reset. Pastikan Flask server berjalan.';
             }
         }
 
@@ -1239,11 +1165,7 @@
                 }
 
                 updateUI(data);
-
-                const latestAvg = (data.history_avg && data.history_avg.length)
-                    ? data.history_avg[data.history_avg.length - 1]
-                    : null;
-                addChartPoint(data.iter, data.score, latestAvg);
+                addChartPoint(data.iter, data.score);
 
                 if (data.is_stuck) {
                     algoTerminated = true;
@@ -1290,119 +1212,27 @@
 
             try {
                 const payload = getParamPayload();
-                const res = await fetch('/api/run-search', {
+                const res = await fetch('/api/run', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
+                updateUI(data);
 
-                if (data.error) {
-                    document.getElementById('msgBox').textContent = 'Error: ' + data.error;
-                    return;
+                if (data.run_metric) {
+                    recordHistory(data.run_metric);
+
+                    const bestHistory = data.run_metric.history_best || [];
+                    const labels = Array.from({ length: bestHistory.length }, (_, i) => i);
+                    setFullChartData(labels, bestHistory);
                 }
-
-                // Tampilkan state akhir ke UI
-                const finalState = data.final_state;
-                const ship = data.ship;
-                updateUIFromRunResult(finalState, ship, data);
-
-                // Plot chart dari history_objective
-                const histObj = data.history_objective || [];
-                const labels = Array.from({ length: histObj.length }, (_, i) => i);
-                setFullChartData(labels, histObj);
-
-                // Catat ke history log
-                const algoSelect = document.getElementById('algoSelect');
-                const algoName = algoSelect.options[algoSelect.selectedIndex].text;
-                recordHistory({
-                    algorithm: algoName,
-                    parameters: formatParams(payload),
-                    score: data.best_objective,
-                    iterations: data.total_iterations,
-                    evaluations: data.total_evaluations,
-                    execution_time: data.execution_time,
-                    valid: finalState ? finalState.valid : false
-                });
-
             } catch (e) {
                 console.error('Run full error:', e);
-                document.getElementById('msgBox').textContent = 'Network error. Pastikan Flask server berjalan.';
             } finally {
                 btn.disabled = false;
                 updateRunButtonText();
             }
-        }
-
-        function updateUIFromRunResult(state, ship, data) {
-            if (!state) return;
-
-            document.getElementById('valScore').textContent = formatNumber(data.best_objective);
-            document.getElementById('valIter').textContent = formatNumber(data.total_iterations);
-            document.getElementById('valEvals').textContent = formatNumber(data.total_evaluations);
-
-            const badge = document.getElementById('statusBadge');
-            if (state.valid) {
-                badge.className = 'status-badge valid';
-                badge.textContent = 'Valid Deck Placement';
-            } else {
-                badge.className = 'status-badge invalid';
-                badge.textContent = 'Invalid Placement';
-            }
-
-            const curWeight = state.total_weight || 0;
-            const maxCapacity = ship ? ship.max_capacity : 100;
-            const pct = Math.min(100, Math.round((curWeight / maxCapacity) * 100));
-            const fill = document.getElementById('capacityFill');
-            fill.style.width = pct + '%';
-            fill.className = 'progress-fill' + (pct > 100 ? ' over' : pct > 80 ? ' warn' : '');
-            document.getElementById('capacityLabel').textContent = `${curWeight} / ${maxCapacity} Tons (${pct}%)`;
-
-            const algo = data.algorithm;
-            let extraMsg = '';
-            if (algo === 'sideways' && data.sideways_moves_count !== undefined) {
-                extraMsg = ` | Sideways moves: ${data.sideways_moves_count}`;
-            } else if ((algo === 'simulated_annealing' || algo === 'sa') && data.final_temperature !== undefined) {
-                extraMsg = ` | Final T: ${data.final_temperature.toFixed(4)}, Stuck: ${data.stuck_count}`;
-            }
-            document.getElementById('msgBox').textContent =
-                `Done in ${data.execution_time}s · Score: $${formatNumber(data.best_objective)} · Iter: ${data.total_iterations}${extraMsg}`;
-
-            // Render grid dari final_state
-            const grid = state.grid;
-            if (grid && grid.length) {
-                const rows = grid.length;
-                const cols = grid[0].length;
-                const container = document.getElementById('deckGridContainer');
-                container.style.gridTemplateColumns = `repeat(${cols}, var(--cell-size))`;
-                container.style.gridTemplateRows = `repeat(${rows}, var(--cell-size))`;
-                container.innerHTML = '';
-
-                // Pastikan warna kendaraan sudah di-assign
-                (state.vehicles || []).forEach((v, idx) => getVehicleColor(v.id, idx));
-
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const val = grid[r][c];
-                        const div = document.createElement('div');
-                        div.className = 'deck-cell';
-                        if (val === 0 || val === null || val === '') {
-                            div.classList.add('cell-empty');
-                        } else {
-                            const vid = String(val);
-                            const color = vehicleColorMap[vid] || '#6366f1';
-                            div.classList.add('cell-loaded');
-                            div.style.backgroundColor = hexToRgba(color, 0.88);
-                            div.style.borderColor = 'rgba(255, 255, 255, 0.85)';
-                            div.textContent = vid;
-                            div.title = vid;
-                        }
-                        container.appendChild(div);
-                    }
-                }
-            }
-
-            renderVehicleList(state.vehicles || []);
         }
 
         function toggleAuto() {
