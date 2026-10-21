@@ -9,9 +9,9 @@ Aplikasi visualizer interaktif berbasis web untuk memecahkan masalah optimasi pe
 
 | No | Nama Lengkap | NIM | Pengerjaan / Kontribusi |
 |:--:|:---|:---:|:---|
-| 1 | Salma Az Zahra | 18224015 | [Rincian tugas / pengerjaan anggota 1] |
-| 2 | Belva Charissa Putri Have | 18224051 | [Rincian tugas / pengerjaan anggota 2] |
-| 3 | Sherry Eunike | 18224075 | [Rincian tugas / pengerjaan anggota 3] |
+| 1 | Salma Az Zahra | 18224015 | <ul><li>Mengerjakan Random Restart & Stochastic Hill-Climbing</li><li>Melakukan Testing & Pengujian Algoritma</li><li>Pengerjaan Laporan</li></ul> |
+| 2 | Belva Charissa Putri Have | 18224051 | <ul><li>Mengerjakan Hill-Climbing with Sideways Move & Simulated Annealing</li><li>Melakukan Testing & Pengujian Algoritma</li><li>Pengerjaan Laporan</li></ul> |
+| 3 | Sherry Eunike | 18224075 | <ul><li>Mengerjakan Steepest Ascent Hill-Climbing & Genetic Algorithm</li><li>Mengerjakan Bonus Fungsi Objektif</li><li>Melakukan Testing & Pengujian Algoritma</li><li>Pengerjaan Laporan</li></ul> |
 
 ---
 
