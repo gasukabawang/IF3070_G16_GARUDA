@@ -722,6 +722,10 @@
                 <label for="algoSelect">Optimization Algorithm</label>
                 <select id="algoSelect" class="form-control">
                     <option value="steepest">Steepest Ascent Hill-Climbing</option>
+                    <option value="stochastic">Stochastic Hill-Climbing</option>
+                    <option value="sideways">Hill-Climbing with Sideways Move</option>
+                    <option value="restart">Random Restart Hill-Climbing</option>
+                    <option value="simulated_annealing">Simulated Annealing</option>
                     <option value="genetic_algorithm">Genetic Algorithm</option>
                 </select>
             </div>
@@ -730,6 +734,25 @@
                 <div class="form-group" id="grpMaxIter">
                     <label for="inputMaxIter">Max Iterations</label>
                     <input type="number" id="inputMaxIter" class="form-control" value="500" min="10" max="5000" />
+                </div>
+
+                <div class="form-group" id="grpMaxSideways" style="display: none;">
+                    <label for="inputMaxSideways">Max Sideways Moves</label>
+                    <input type="number" id="inputMaxSideways" class="form-control" value="100" min="1" max="1000" />
+                </div>
+
+                <div class="form-group" id="grpMaxRestarts" style="display: none;">
+                    <label for="inputMaxRestarts">Max Restarts</label>
+                    <input type="number" id="inputMaxRestarts" class="form-control" value="5" min="1" max="50" />
+                </div>
+
+                <div class="form-group" id="grpInitialTemp" style="display: none;">
+                    <label for="inputInitialTemp">Initial Temperature (T0)</label>
+                    <input type="number" id="inputInitialTemp" class="form-control" value="1000" min="10" max="50000" step="50" />
+                </div>
+                <div class="form-group" id="grpCoolingRate" style="display: none;">
+                    <label for="inputCoolingRate">Cooling Rate (Alpha)</label>
+                    <input type="number" id="inputCoolingRate" class="form-control" value="0.95" min="0.5" max="0.999" step="0.01" />
                 </div>
 
                 <div class="form-group" id="grpMaxGens" style="display: none;">
@@ -896,7 +919,11 @@ function formatNumber(num) {
 function syncDynamicParams() {
     const algo = document.getElementById('algoSelect').value;
 
-    document.getElementById('grpMaxIter').style.display       = (algo === 'steepest') ? 'block' : 'none';
+    document.getElementById('grpMaxIter').style.display       = (algo !== 'genetic_algorithm') ? 'block' : 'none';
+    document.getElementById('grpMaxSideways').style.display   = (algo === 'sideways') ? 'block' : 'none';
+    document.getElementById('grpMaxRestarts').style.display   = (algo === 'restart') ? 'block' : 'none';
+    document.getElementById('grpInitialTemp').style.display   = (algo === 'simulated_annealing') ? 'block' : 'none';
+    document.getElementById('grpCoolingRate').style.display   = (algo === 'simulated_annealing') ? 'block' : 'none';
     document.getElementById('grpMaxGens').style.display       = (algo === 'genetic_algorithm') ? 'block' : 'none';
     document.getElementById('grpPopSize').style.display       = (algo === 'genetic_algorithm') ? 'block' : 'none';
     document.getElementById('grpMutationRate').style.display  = (algo === 'genetic_algorithm') ? 'block' : 'none';
@@ -913,6 +940,10 @@ function getParamPayload() {
     return {
         algorithm: algo,
         max_iterations: parseInt(document.getElementById('inputMaxIter').value) || 500,
+        max_sideways_moves: parseInt(document.getElementById('inputMaxSideways').value) || 100,
+        max_restarts: parseInt(document.getElementById('inputMaxRestarts').value) || 5,
+        initial_temperature: parseFloat(document.getElementById('inputInitialTemp').value) || 1000.0,
+        cooling_rate: parseFloat(document.getElementById('inputCoolingRate').value) || 0.95,
         population_size: parseInt(document.getElementById('inputPopSize').value) || 20,
         max_generations: parseInt(document.getElementById('inputMaxGens').value) || 40,
         mutation_rate: parseFloat(document.getElementById('inputMutationRate').value) || 0.15
@@ -947,6 +978,12 @@ function updateRunButtonText() {
 function formatParams(payload) {
     if (payload.algorithm === 'genetic_algorithm') {
         return `Pop: ${payload.population_size}, Gens: ${payload.max_generations}, Mut: ${payload.mutation_rate}`;
+    } else if (payload.algorithm === 'simulated_annealing') {
+        return `T0: ${payload.initial_temperature}, Cooling: ${payload.cooling_rate}, Max Iter: ${payload.max_iterations}`;
+    } else if (payload.algorithm === 'sideways') {
+        return `Max Sideways: ${payload.max_sideways_moves}, Max Iter: ${payload.max_iterations}`;
+    } else if (payload.algorithm === 'restart') {
+        return `Restarts: ${payload.max_restarts}, Max Iter: ${payload.max_iterations}`;
     }
     return `Max Iter: ${payload.max_iterations}`;
 }
