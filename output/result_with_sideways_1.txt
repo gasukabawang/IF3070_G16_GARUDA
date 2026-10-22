@@ -1,0 +1,32 @@
+============================================================
+RUN #1 - HILL-CLIMBING WITH SIDEWAYS MOVE
+============================================================
+Algorithm       : Hill-Climbing with Sideways Move
+Objective Type  : fee
+Parameters      : Max Sideways: 100, Max Iter: 500
+Execution Time  : 0.1173s
+Iterations      : 101
+Evaluations     : 7141
+Objective Score : 23500
+Deck Capacity   : 97 / 100 Tons
+Total Fee       : $23,500
+Valid Placement : YES
+------------------------------------------------------------
+VEHICLES:
+  [LOADED] V1   | Pos: (2,3) | Dim: 2x2 (Vertical  ) | Berat: 20T | Fee: $ 5000 | ETA: 1
+  [LOADED] V2   | Pos: (0,0) | Dim: 3x2 (Vertical  ) | Berat: 30T | Fee: $ 7000 | ETA: 1
+  [PARKED] V3   | Pos: (0,0) | Dim: 1x4 (Horizontal) | Berat: 15T | Fee: $ 4000 | ETA: 2
+  [PARKED] V4   | Pos: (4,3) | Dim: 2x2 (Vertical  ) | Berat: 25T | Fee: $ 6000 | ETA: 3
+  [PARKED] V5   | Pos: (0,0) | Dim: 3x1 (Horizontal) | Berat: 18T | Fee: $ 5500 | ETA: 2
+  [PARKED] V6   | Pos: (0,0) | Dim: 1x2 (Horizontal) | Berat: 10T | Fee: $ 3000 | ETA: 4
+  [LOADED] V7   | Pos: (3,1) | Dim: 2x1 (Horizontal) | Berat: 12T | Fee: $ 3500 | ETA: 5
+  [LOADED] V8   | Pos: (4,3) | Dim: 2x3 (Vertical  ) | Berat: 35T | Fee: $ 8000 | ETA: 3
+------------------------------------------------------------
+DECK LAYOUT (6x6):
+  [V2 ] [V2 ] [V2 ] [ . ] [ . ] [ . ]
+  [V2 ] [V2 ] [V2 ] [V7 ] [V7 ] [ . ]
+  [ . ] [ . ] [ . ] [ . ] [ . ] [ . ]
+  [ . ] [ . ] [V1 ] [V1 ] [V8 ] [V8 ]
+  [ . ] [ . ] [V1 ] [V1 ] [V8 ] [V8 ]
+  [ . ] [ . ] [ . ] [ . ] [V8 ] [V8 ]
+============================================================

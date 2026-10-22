@@ -1,0 +1,32 @@
+============================================================
+RUN #1 - STOCHASTIC HILL-CLIMBING
+============================================================
+Algorithm       : Stochastic Hill-Climbing
+Objective Type  : fee
+Parameters      : Max Iter: 500
+Execution Time  : 0.0044s
+Iterations      : 2
+Evaluations     : 211
+Objective Score : 27000
+Deck Capacity   : 100 / 100 Tons
+Total Fee       : $27,000
+Valid Placement : YES
+------------------------------------------------------------
+VEHICLES:
+  [LOADED] V1   | Pos: (1,0) | Dim: 2x2 (Vertical  ) | Berat: 20T | Fee: $ 5000 | ETA: 1
+  [PARKED] V2   | Pos: (1,1) | Dim: 2x3 (Horizontal) | Berat: 30T | Fee: $ 7000 | ETA: 1
+  [LOADED] V3   | Pos: (4,2) | Dim: 1x4 (Horizontal) | Berat: 15T | Fee: $ 4000 | ETA: 2
+  [LOADED] V4   | Pos: (1,2) | Dim: 2x2 (Vertical  ) | Berat: 25T | Fee: $ 6000 | ETA: 3
+  [LOADED] V5   | Pos: (0,0) | Dim: 1x3 (Vertical  ) | Berat: 18T | Fee: $ 5500 | ETA: 2
+  [LOADED] V6   | Pos: (5,4) | Dim: 1x2 (Horizontal) | Berat: 10T | Fee: $ 3000 | ETA: 4
+  [LOADED] V7   | Pos: (3,0) | Dim: 2x1 (Horizontal) | Berat: 12T | Fee: $ 3500 | ETA: 5
+  [PARKED] V8   | Pos: (0,0) | Dim: 3x2 (Horizontal) | Berat: 35T | Fee: $ 8000 | ETA: 3
+------------------------------------------------------------
+DECK LAYOUT (6x6):
+  [V5 ] [V1 ] [V1 ] [V7 ] [V7 ] [ . ]
+  [V5 ] [V1 ] [V1 ] [ . ] [ . ] [ . ]
+  [V5 ] [V4 ] [V4 ] [ . ] [V3 ] [ . ]
+  [ . ] [V4 ] [V4 ] [ . ] [V3 ] [ . ]
+  [ . ] [ . ] [ . ] [ . ] [V3 ] [V6 ]
+  [ . ] [ . ] [ . ] [ . ] [V3 ] [V6 ]
+============================================================

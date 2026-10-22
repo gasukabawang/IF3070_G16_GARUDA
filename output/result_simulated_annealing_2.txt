@@ -1,0 +1,33 @@
+============================================================
+RUN #2 - SIMULATED ANNEALING
+============================================================
+Algorithm       : Simulated Annealing
+Objective Type  : eta_priority
+Parameters      : T0: 1000.0, Cooling: 0.95, Max Iter: 500
+Execution Time  : 0.0207s
+Iterations      : 117
+Evaluations     : 471
+Objective Score : 13200
+Deck Capacity   : 100 / 100 Tons
+Total Fee       : $27,000
+Valid Placement : YES
+Stuck Frequency : 108 times
+------------------------------------------------------------
+VEHICLES:
+  [LOADED] V1   | Pos: (4,0) | Dim: 2x2 (Horizontal) | Berat: 20T | Fee: $ 5000 | ETA: 1
+  [PARKED] V2   | Pos: (0,0) | Dim: 2x3 (Horizontal) | Berat: 30T | Fee: $ 7000 | ETA: 1
+  [LOADED] V3   | Pos: (2,5) | Dim: 4x1 (Vertical  ) | Berat: 15T | Fee: $ 4000 | ETA: 2
+  [LOADED] V4   | Pos: (2,3) | Dim: 2x2 (Horizontal) | Berat: 25T | Fee: $ 6000 | ETA: 3
+  [LOADED] V5   | Pos: (3,2) | Dim: 3x1 (Horizontal) | Berat: 18T | Fee: $ 5500 | ETA: 2
+  [LOADED] V6   | Pos: (1,3) | Dim: 1x2 (Horizontal) | Berat: 10T | Fee: $ 3000 | ETA: 4
+  [LOADED] V7   | Pos: (1,2) | Dim: 2x1 (Horizontal) | Berat: 12T | Fee: $ 3500 | ETA: 5
+  [PARKED] V8   | Pos: (1,1) | Dim: 3x2 (Horizontal) | Berat: 35T | Fee: $ 8000 | ETA: 3
+------------------------------------------------------------
+DECK LAYOUT (6x6):
+  [ . ] [ . ] [ . ] [ . ] [V1 ] [V1 ]
+  [ . ] [ . ] [ . ] [ . ] [V1 ] [V1 ]
+  [ . ] [V7 ] [V7 ] [V5 ] [V5 ] [V5 ]
+  [ . ] [V6 ] [V4 ] [V4 ] [ . ] [ . ]
+  [ . ] [V6 ] [V4 ] [V4 ] [ . ] [ . ]
+  [ . ] [ . ] [V3 ] [V3 ] [V3 ] [V3 ]
+============================================================
