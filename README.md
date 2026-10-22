@@ -91,11 +91,11 @@ Sistem menyediakan 3 pilihan fungsi objektif tanpa mengubah variabel dasar:
    - Memaksimalkan total ongkos kirim seluruh kendaraan yang berhasil dimuat di atas geladak kapal.
    $$f(\text{state}) = \sum_{v \in \text{loaded}} \text{fee}_v$$
 
-2. **Urgency Priority**
+2. **ETA Priority**
    - Memprioritaskan muatan yang memiliki batas sisa hari tiba (`eta`) paling mendesak/kecil.
    $$f(\text{state}) = \sum_{v \in \text{loaded}} \frac{\text{fee}_v}{\max(1, \text{eta}_v)}$$
 
-3. **Space & Capacity Utilization**
+3. **Capacity Eficiency**
    - Menggabungkan perolehan ongkos kirim dengan efisiensi penggunaan luas area geladak ($w \times l$) dan utilisasi kapasitas berat kapal ($MaxCapacity$).
 
 ---

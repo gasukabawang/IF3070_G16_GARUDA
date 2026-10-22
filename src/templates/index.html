@@ -426,7 +426,7 @@ function updateRunButtonText() {
 }
 
 function formatParams(payload) {
-    let objLabel = payload.objective_type === 'eta_priority' ? "ETA-Priority" : payload.objective_type === 'cao_efficiency' ? "Cap-Eff" : "Fee";
+    let objLabel = payload.objective_type === 'eta_priority' ? "ETA-Priority" : payload.objective_type === 'cap_efficiency' ? "Cap-Eff" : "Fee";
     let p = payload.algorithm === 'genetic_algorithm' ? `Pop: ${payload.population_size}, Gens: ${payload.max_generations}, Mut: ${payload.mutation_rate}` :
             payload.algorithm === 'simulated_annealing' ? `T0: ${payload.initial_temperature}, Cooling: ${payload.cooling_rate}, Max Iter: ${payload.max_iterations}` :
             payload.algorithm === 'sideways' ? `Max Sideways: ${payload.max_sideways_moves}, Max Iter: ${payload.max_iterations}` :
